@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Evento{% endblock %}
+
+{% block additional_head %}
+<style>
+    h1 {
+        text-align: center;
+        margin: 20px 0;
+        color: var(--primary-color);
+    }
+    .evento-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: var(--background-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    .evento-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .evento-info {
+        margin-bottom: 20px;
+    }
+    .evento-info p {
+        margin: 10px 0;
+        font-size: 1.1em;
+    }
+    .evento-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: var(--secondary-color);
+        color: var(--text-dark);
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+        background-color: var(--primary-color);
+    }
+    .btn-danger {
+        background-color: #e74c3c;
+    }
+    .btn-danger:hover {
+        background-color: #c0392b;
+    }
+    .participantes-section {
+        margin-top: 30px;
+        border-top: 1px solid #ddd;
+        padding-top: 20px;
+    }
+    .participantes-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .participantes-list {
+        background-color: #f9f9f9;
+        border-radius: var(--border-radius);
+        padding: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .participante-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .participante-item:last-child {
+        border-bottom: none;
+    }
+    .participante-info {
+        flex-grow: 1;
+    }
+    .participante-actions {
+        display: flex;
+        gap: 5px;
+    }
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.8em;
+    }
+    .btn-success {
+        background-color: #2ecc71;
+        color: white;
+    }
+    .btn-warning {
+        background-color: #f39c12;
+        color: white;
+    }
+    .btn-info {
+        background-color: #3498db;
+        color: white;
+    }
+    .empty-message {
+        text-align: center;
+        padding: 20px;
+        color: #777;
+        font-style: italic;
+    }
+    .participantes-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="evento-container">
+    <div class="evento-header">
+        <h1>{{ evento.nome }}</h1>
+    </div>
+
+    <div class="evento-info">
+        {% if evento.data_fim %}
+            <p><strong>Data:</strong> {{ evento.data_inicio.strftime('%d/%m/%Y') }} a {{ evento.data_fim.strftime('%d/%m/%Y') }}</p>
+        {% else %}
+            <p><strong>Data:</strong> {{ evento.data_inicio.strftime('%d/%m/%Y') }}</p>
+        {% endif %}
+        <p><strong>Duração:</strong> {{ evento.duracao_horas }} horas</p>
+        {% if evento.formadora is defined and evento.formadora %}
+            <p><strong>Formadora:</strong> {{ evento.formadora }}</p>
+        {% else %}
+            <p><strong>Formadora:</strong> Não definida</p>
+        {% endif %}
+    </div>
+
+    <div class="evento-actions">
+        <a href="{{ url_for('main.eventos') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <a href="{{ url_for('main.editar_evento', id=evento.id) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Editar
+        </a>
+        <form method="POST" action="{{ url_for('main.apagar_evento', id=evento.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja apagar este evento?')">
+                <i class="fas fa-trash"></i> Apagar
+            </button>
+        </form>
+    </div>
+    
+    <div class="participantes-section">
+        <div class="participantes-header">
+            <h2>Participantes</h2>
+            <span>Total: {{ participantes|length }}</span>
+        </div>
+
+        <div class="participantes-list">
+            {% if participantes %}
+                {% for participante in participantes %}
+                <div class="participante-item">
+                    <div class="participante-info">
+                        <strong>{{ participante.nome }}</strong>
+                        <div>{{ participante.email }}</div>
+                        <div>
+                            <small>Status: {{ participante.status }}</small>
+                            {% if participante.certificado_gerado %}
+                                <small>| Certificado gerado</small>
+                            {% endif %}
+                            {% if participante.certificado_enviado %}
+                                <small>| Certificado enviado</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="participante-actions">
+                        {# Funcionalidades de certificados temporariamente desativadas
+                        {% if not participante.certificado_gerado %}
+                            <a href="{{ url_for('main.gerar_certificado', participante_id=participante.id) }}" class="btn btn-sm btn-success">Gerar Certificado</a>
+                        {% endif %}
+                        {% if participante.certificado_gerado and not participante.certificado_enviado %}
+                            <a href="{{ url_for('main.enviar_certificado', participante_id=participante.id) }}" class="btn btn-sm btn-info">Enviar Certificado</a>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('main.remover_participante', evento_id=evento.id, participante_id=participante.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja remover este participante?')">Remover</button>
+                        </form>
+                        #}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-message">
+                    Nenhum participante registrado para este evento.
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="participantes-actions">
+            {# Funcionalidades de gestão de participantes temporariamente desativadas
+            <a href="{{ url_for('main.adicionar_participantes', evento_id=evento.id) }}" class="btn btn-success">
+                <i class="fas fa-user-plus"></i> Adicionar Participantes
+            </a>
+            <a href="{{ url_for('main.importar_participantes', evento_id=evento.id) }}" class="btn btn-info">
+                <i class="fas fa-file-excel"></i> Importar Participantes
+            </a>
+            {% if participantes %}
+                <a href="{{ url_for('main.gerar_certificados_todos', evento_id=evento.id) }}" class="btn btn-warning">
+                    <i class="fas fa-certificate"></i> Gerar Todos Certificados
+                </a>
+                <a href="{{ url_for('main.enviar_certificados_todos', evento_id=evento.id) }}" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Enviar Todos Certificados
+                </a>
+            {% endif %}
+            #}
+        </div>
+    </div>
+</div>
+{% endblock %}

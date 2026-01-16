@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Gestor Wellness - Início{% endblock %}
+
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        /* Paleta Wellness - Cores suaves inspiradas em natureza e mindfulness */
+        --sage-green: #9DB5A5;
+        --lavender: #C8B8D8;
+        --soft-peach: #F5D4C5;
+        --warm-cream: #FFF8F0;
+        --deep-sage: #5F7A6C;
+        --muted-purple: #8B7B9B;
+        --text-dark: #3D4A3E;
+        --text-light: #7A8A7E;
+
+        /* Gradientes fluidos modernos */
+        --gradient-wellness: linear-gradient(135deg, #C8B8D8 0%, #9DB5A5 50%, #F5D4C5 100%);
+        --gradient-sage: linear-gradient(135deg, #9DB5A5 0%, #5F7A6C 100%);
+        --gradient-lavender: linear-gradient(135deg, #E8DFF5 0%, #C8B8D8 100%);
+        --gradient-peach: linear-gradient(135deg, #FFF8F0 0%, #F5D4C5 100%);
+        --gradient-overlay: linear-gradient(135deg, rgba(157, 181, 165, 0.1) 0%, rgba(200, 184, 216, 0.1) 100%);
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--warm-cream);
+    }
+
+    .landing-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 80px 20px;
+        background: var(--warm-cream);
+        min-height: calc(100vh - 120px);
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .landing-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 30% 50%, rgba(157, 181, 165, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 50%, rgba(200, 184, 216, 0.08) 0%, transparent 50%);
+        animation: float 20s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+
+    .landing-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 50px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .landing-logo {
+        width: 90px;
+        height: 90px;
+        background: var(--gradient-lavender);
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3em;
+        box-shadow: 0 20px 40px rgba(157, 181, 165, 0.2);
+        transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transform-style: preserve-3d;
+        margin-bottom: 25px;
+        backdrop-filter: blur(10px);
+    }
+
+    .landing-logo:hover {
+        transform: translateY(-10px) scale(1.05);
+        box-shadow: 0 30px 60px rgba(157, 181, 165, 0.3);
+        border-radius: 30px;
+    }
+
+    .landing-title {
+        font-family: 'Cormorant Garamond', serif;
+        color: var(--text-dark);
+        font-size: 3.5em;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin-bottom: 15px;
+        line-height: 1.1;
+        background: var(--gradient-wellness);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+
+    .landing-subtitle {
+        font-family: 'Inter', sans-serif;
+        color: var(--text-light);
+        font-size: 1.1em;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+
+    .landing-description {
+        color: var(--text-light);
+        max-width: 700px;
+        line-height: 1.9;
+        margin-bottom: 60px;
+        font-size: 1.15em;
+        font-weight: 400;
+        opacity: 0.85;
+        position: relative;
+        z-index: 2;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 40px;
+        width: 100%;
+        max-width: 900px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .feature-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        border-radius: 25px;
+        padding: 50px 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(157, 181, 165, 0.2);
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--gradient-overlay);
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        z-index: 0;
+    }
+
+    .feature-card:hover::before {
+        opacity: 1;
+    }
+
+    .feature-card:nth-child(1) {
+        background: linear-gradient(135deg, rgba(157, 181, 165, 0.15) 0%, rgba(255, 255, 255, 0.7) 100%);
+    }
+
+    .feature-card:nth-child(2) {
+        background: linear-gradient(135deg, rgba(200, 184, 216, 0.15) 0%, rgba(255, 255, 255, 0.7) 100%);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.12);
+        border-color: rgba(157, 181, 165, 0.4);
+    }
+
+    .feature-icon {
+        width: 110px;
+        height: 110px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin-bottom: 30px;
+        background: var(--gradient-sage);
+        box-shadow: 0 15px 35px rgba(157, 181, 165, 0.25);
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 2;
+        position: relative;
+        font-size: 3em;
+    }
+
+    .feature-card:nth-child(2) .feature-icon {
+        background: var(--gradient-lavender);
+        box-shadow: 0 15px 35px rgba(200, 184, 216, 0.25);
+    }
+
+    .feature-card:hover .feature-icon {
+        transform: scale(1.15) rotate(5deg);
+        box-shadow: 0 20px 50px rgba(157, 181, 165, 0.35);
+    }
+
+    .feature-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2em;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+        letter-spacing: -0.01em;
+        z-index: 2;
+        position: relative;
+    }
+
+    .feature-description {
+        font-family: 'Inter', sans-serif;
+        color: var(--text-light);
+        margin-bottom: 35px;
+        line-height: 1.7;
+        opacity: 0.85;
+        font-size: 1.05em;
+        font-weight: 400;
+        z-index: 2;
+        position: relative;
+    }
+
+    .feature-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 35px;
+        background: var(--gradient-sage);
+        color: white;
+        text-decoration: none;
+        border-radius: 50px;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        z-index: 3;
+        font-weight: 500;
+        font-size: 1em;
+        letter-spacing: 0.02em;
+        box-shadow: 0 10px 30px rgba(157, 181, 165, 0.3);
+        overflow: hidden;
+    }
+
+    .feature-card:nth-child(2) .feature-btn {
+        background: var(--gradient-lavender);
+        box-shadow: 0 10px 30px rgba(200, 184, 216, 0.3);
+    }
+
+    .feature-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .feature-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .feature-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(157, 181, 165, 0.4);
+    }
+
+    @media (max-width: 768px) {
+        .landing-title {
+            font-size: 2.5em;
+        }
+
+        .feature-grid {
+            grid-template-columns: 1fr;
+            max-width: 400px;
+        }
+
+        .feature-card {
+            padding: 40px 30px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="landing-container">
+    <div class="landing-header">
+        <div class="landing-logo">🌿</div>
+        <h1 class="landing-title">Gestor Wellness</h1>
+        <p class="landing-subtitle">Óleos Essenciais & Mindfulness</p>
+    </div>
+
+    <p class="landing-description">
+        Transforme a gestão dos seus eventos de bem-estar. Uma plataforma elegante e intuitiva
+        para organizar workshops, sessões de aromaterapia e experiências de mindfulness com harmonia e simplicidade.
+    </p>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🧘</div>
+            <h2 class="feature-title">Gestão Manual</h2>
+            <p class="feature-description">
+                Controlo completo sobre os seus eventos. Crie, organize e personalize cada detalhe
+                das suas sessões de bem-estar com total flexibilidade.
+            </p>
+            <a href="{{ url_for('main.eventos') }}" class="feature-btn">
+                <span>Explorar Eventos</span>
+                <span>→</span>
+            </a>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">✨</div>
+            <h2 class="feature-title">Gestão Automática</h2>
+            <p class="feature-description">
+                Automatize formulários, sincronize participantes e envie certificados.
+                Deixe a tecnologia cuidar dos detalhes enquanto foca no essencial.
+            </p>
+            <a href="{{ url_for('main.gestao_automatica') }}" class="feature-btn">
+                <span>Automatizar</span>
+                <span>→</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

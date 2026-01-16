@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Evento{% endblock %}
+
+{% block additional_head %}
+<style>
+    h1 {
+        text-align: center;
+        margin: 20px 0;
+        color: var(--primary-color);
+    }
+    form {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: var(--background-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    label {
+        display: block;
+        margin: 15px 0 5px;
+        color: var(--text-dark);
+        font-weight: bold;
+    }
+    input[type="text"],
+    input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid var(--text-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: var(--secondary-color);
+        color: var(--text-dark);
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+        background-color: var(--primary-color);
+    }
+    .btn-danger {
+        background-color: #e74c3c;
+    }
+    .btn-danger:hover {
+        background-color: #c0392b;
+    }
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    .form-actions a {
+        margin-right: 10px;
+    }
+    .form-actions a:last-child {
+        margin-right: 0;
+    }
+    .editar-evento-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: var(--background-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    .editar-evento-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .editar-evento-form {
+        padding: 20px;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .btn-submit {
+        background-color: var(--secondary-color);
+        color: var(--text-dark);
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+    }
+    .btn-cancel {
+        background-color: #e74c3c;
+        color: var(--text-dark);
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+    }
+    .btn-cancel:hover {
+        background-color: #c0392b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="editar-evento-container">
+    <div class="editar-evento-header">
+        <h1>Editar Evento</h1>
+    </div>
+
+    <form method="POST" class="editar-evento-form">
+        <div class="form-group">
+            <label for="nome">Nome do Evento</label>
+            <input type="text" id="nome" name="nome" required value="{{ evento.nome }}">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Evento</label>
+            <div style="display: flex; gap: 30px; align-items: center; margin-top: 8px;">
+                <label style="display: flex; align-items: center;">
+                    <input type="radio" id="evento_um_dia" name="tipo_evento" value="um_dia"
+                        {% if not evento.data_fim %}checked{% endif %} onchange="toggleDataFields()">
+                    <span style="margin-left: 5px;">Evento de um dia</span>
+                </label>
+                
+                <label style="display: flex; align-items: center;">
+                    <input type="radio" id="evento_varios_dias" name="tipo_evento" value="varios_dias"
+                        {% if evento.data_fim %}checked{% endif %} onchange="toggleDataFields()">
+                    <span style="margin-left: 5px;">Evento de vários dias</span>
+                </label>
+            </div>
+        </div>                
+
+        <div id="data_unico_container" class="form-group" {% if evento.data_fim %}style="display: none;"{% endif %}>
+            <label for="data">Data do Evento</label>
+            <input type="text" id="data" name="data" value="{{ evento.data_inicio.strftime('%d/%m/%y') }}" pattern="\d{2}/\d{2}/\d{2}">
+        </div>
+
+        <div id="data_intervalo_container" class="form-group" {% if not evento.data_fim %}style="display: none;"{% endif %}>
+            <label for="data_inicio">De</label>
+            <input type="text" id="data_inicio" name="data_inicio" value="{{ evento.data_inicio.strftime('%d/%m/%y') }}" pattern="\d{2}/\d{2}/\d{2}">
+
+            <label for="data_fim">a</label>
+            <input type="text" id="data_fim" name="data_fim" value="{{ evento.data_fim.strftime('%d/%m/%y') if evento.data_fim else '' }}" pattern="\d{2}/\d{2}/\d{2}">
+        </div>
+
+        <div class="form-group">
+            <label for="duracao">Duração (horas):</label>
+            <input type="number" id="duracao" name="duracao" min="1" step="1" required value="{{ evento.duracao_horas }}">
+        </div>
+
+        <div class="form-group">
+            <label for="formadora">Formadora:</label>
+            <select id="formadora" name="formadora" required>
+                <option value="Ana Rita Vieira" {% if evento.formadora == 'Ana Rita Vieira' %}selected{% endif %}>Ana Rita Vieira</option>
+                <option value="Outro" {% if evento.formadora != 'Ana Rita Vieira' %}selected{% endif %}>Outro</option>
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Salvar Alterações
+            </button>
+            <a href="{{ url_for('main.eventos') }}" class="btn btn-danger">
+                <i class="fas fa-times-circle"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleDataFields() {
+        const tipoEventoUmDia = document.getElementById('evento_um_dia').checked;
+        const dataUnicoContainer = document.getElementById('data_unico_container');
+        const dataIntervaloContainer = document.getElementById('data_intervalo_container');
+        const dataInput = document.getElementById('data');
+        const dataInicioInput = document.getElementById('data_inicio');
+        const dataFimInput = document.getElementById('data_fim');
+        
+        if (tipoEventoUmDia) {
+            dataUnicoContainer.style.display = 'block';
+            dataIntervaloContainer.style.display = 'none';
+            dataInput.required = true;
+            dataInicioInput.required = false;
+            dataFimInput.required = false;
+        } else {
+            dataUnicoContainer.style.display = 'none';
+            dataIntervaloContainer.style.display = 'block';
+            dataInput.required = false;
+            dataInicioInput.required = true;
+            dataFimInput.required = true;
+        }
+    }
+    
+    // Inicializar o estado dos campos
+    document.addEventListener('DOMContentLoaded', toggleDataFields);
+</script>
+{% endblock %}

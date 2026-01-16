@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Adicionar Utilizador{% endblock %}
+
+{% block additional_head %}
+<style>
+    .adicionar-utilizador-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: var(--background-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    .adicionar-utilizador-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .adicionar-utilizador-form {
+        display: flex;
+        flex-direction: column;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--text-dark);
+        font-weight: bold;
+    }
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--text-light);
+        border-radius: var(--border-radius);
+    }
+    .btn-submit {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .btn-submit:hover {
+        background-color: var(--secondary-color);
+    }
+    .btn-cancel {
+        background-color: var(--text-light);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 10px;
+        text-align: center;
+    }
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 20px;
+        width: 60%;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover {
+        color: black;
+    }
+    .btn-adicionar-massa {
+        background-color: var(--secondary-color);
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+    .formato-info {
+        font-size: 0.9em;
+        color: var(--text-light);
+        margin-bottom: 10px;
+    }
+    .formato-exemplo {
+        background-color: var(--background-light);
+        padding: 10px;
+        border-radius: var(--border-radius);
+        margin-bottom: 10px;
+        font-family: monospace;
+        font-size: 0.9em;
+        white-space: pre-wrap;
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adicionar-utilizador-container">
+    <div class="adicionar-utilizador-header">
+        <h1>Adicionar Utilizador</h1>
+    </div>
+
+    <button id="btnAdicionarEmMassa" class="btn-adicionar-massa">Adicionar Utilizadores em Massa</button>
+
+    <form method="POST" class="adicionar-utilizador-form">
+        <div class="form-group">
+            <label for="nome_completo">Nome Completo</label>
+            <input type="text" id="nome_completo" name="nome_completo" required placeholder="Digite o nome completo do utilizador">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required placeholder="Digite o email do utilizador">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">Adicionar Utilizador</button>
+            <a href="{{ url_for('main.utilizadores') }}" class="btn-cancel">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Modal para adicionar utilizadores em massa -->
+<div id="modalAdicionarMassa" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Adicionar Utilizadores em Massa</h2>
+        <p class="formato-info">Insira os utilizadores com o nome em uma ou mais linhas, seguido do email.</p>
+        <p class="formato-info">Cada email será detectado automaticamente, e todo o texto antes dele será considerado o nome do utilizador.</p>
+        <p class="formato-info">Exemplo:</p>
+        <pre class="formato-exemplo">
+Ana
+Gonçalves nitarib@gmail.com
+
+Carla
+Machado carlaformalexandra@gmail.com
+
+Joana Filipa Pacheco
+Moreira joanafilipapachecomoreira@gmail.com</pre>
+        <form method="POST" action="{{ url_for('main.adicionar_utilizadores_massa') }}">
+            <div class="form-group">
+                <textarea name="utilizadores_texto" rows="10" placeholder="Cole aqui a lista de utilizadores..." required></textarea>
+            </div>
+            <button type="submit" class="btn-submit">Importar Utilizadores</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Modal functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        var modal = document.getElementById('modalAdicionarMassa');
+        var btn = document.getElementById('btnAdicionarEmMassa');
+        var span = document.getElementsByClassName('close')[0];
+
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    });
+</script>
+{% endblock %}

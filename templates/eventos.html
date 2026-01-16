@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Eventos{% endblock %}
+
+{% block additional_head %}
+<style>
+    h1 {
+        text-align: center;
+        margin: 20px 0;
+        color: var(--primary-color);
+    }
+    .eventos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        padding: 20px;
+    }
+    .evento-card {
+        background-color: #fefabc;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        padding: 20px;
+        transition: transform 0.3s ease;
+    }
+    .evento-card:hover {
+        transform: translateY(-10px);
+    }
+    .evento-card h2 {
+        margin-top: 0;
+        color: var(--primary-color);
+    }
+    .evento-card p {
+        margin: 10px 0;
+    }
+    .card-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1><strong>Eventos</strong></h1>
+
+    <a href="{{ url_for('main.criar_evento') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Criar Novo Evento
+    </a>
+
+    <div class="eventos-grid">
+        {% for evento in eventos %}
+        <div class="evento-card">
+            <h2><strong>{{ evento.nome }}</strong></h2>
+            {% if evento.data_fim %}
+                <p><strong>Data:</strong> {{ evento.data_inicio.strftime('%d/%m/%Y') }} a {{ evento.data_fim.strftime('%d/%m/%Y') }}</p>
+            {% else %}
+                <p><strong>Data:</strong> {{ evento.data_inicio.strftime('%d/%m/%Y') }}</p>
+            {% endif %}
+            <p><strong>Duração:</strong> {{ evento.duracao_horas }} horas</p>
+            {% if evento.formadora is defined and evento.formadora %}
+                <p><strong>Formadora:</strong> {{ evento.formadora }}</p>
+            {% else %}
+                <p><strong>Formadora:</strong> Não definida</p>
+            {% endif %}
+            
+            <div class="card-actions">
+                <a href="{{ url_for('main.detalhe_evento', id=evento.id) }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-eye"></i> Detalhes
+                </a>
+                <a href="{{ url_for('main.editar_evento', id=evento.id) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <form method="POST" action="{{ url_for('main.apagar_evento', id=evento.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja apagar este evento?')">
+                        <i class="fas fa-trash"></i> Apagar
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

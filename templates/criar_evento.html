@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Evento{% endblock %}
+
+{% block additional_head %}
+<style>
+    h1 {
+        text-align: center;
+        margin: 20px 0;
+        color: var(--primary-color);
+    }
+    form {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: var(--background-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    label {
+        display: block;
+        margin: 15px 0 5px;
+        color: var(--text-dark);
+        font-weight: bold;
+    }
+    input[type="text"],
+    input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid var(--text-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: var(--secondary-color);
+        color: var(--text-dark);
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+        background-color: var(--primary-color);
+    }
+    .btn-danger {
+        background-color: #e74c3c;
+    }
+    .btn-danger:hover {
+        background-color: #c0392b;
+    }
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    .form-actions a {
+        margin-right: 10px;
+    }
+    .form-actions a:last-child {
+        margin-right: 0;
+    }
+    .criar-evento-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: var(--background-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    .criar-evento-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .criar-evento-form {
+        padding: 20px;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .btn-submit {
+        background-color: var(--secondary-color);
+        color: var(--text-dark);
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+    }
+    .btn-cancel {
+        background-color: #e74c3c;
+        color: var(--text-dark);
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+    }
+    .btn-cancel:hover {
+        background-color: #c0392b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="criar-evento-container">
+    <div class="criar-evento-header">
+        <h1>Criar Novo Evento</h1>
+    </div>
+
+    <!-- Excel Upload Section -->
+    <div style="background: #f0f8ff; padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 2px dashed #4CAF50;">
+        <h3 style="margin-top: 0; color: #2e7d32;">
+            <i class="fas fa-file-excel"></i> Importar de Excel
+        </h3>
+        <p style="color: #666; margin-bottom: 15px;">
+            Carregue um ficheiro Excel com os dados do evento e participantes para criar tudo automaticamente.
+        </p>
+        <form method="POST" enctype="multipart/form-data" style="padding: 0;">
+            <input type="file" name="excel_file" accept=".xlsx,.xls" required
+                   style="margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%;">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-upload"></i> Importar Excel
+            </button>
+        </form>
+        <small style="color: #666; display: block; margin-top: 10px;">
+            Formatos suportados: .xlsx, .xls
+        </small>
+    </div>
+
+    <div style="text-align: center; margin: 20px 0; color: #999; font-weight: bold;">
+        OU
+    </div>
+
+    <form method="POST" class="criar-evento-form">
+        <div class="form-group">
+            <label for="nome">Nome do Evento</label>
+            <input type="text" id="nome" name="nome" required placeholder="Digite o nome do evento">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Evento</label>
+            <div>
+                <input type="radio" id="evento_um_dia" name="tipo_evento" value="um_dia" checked onchange="toggleDataFields()">
+                <label for="evento_um_dia">Evento de um dia</label>
+                
+                <input type="radio" id="evento_varios_dias" name="tipo_evento" value="varios_dias" onchange="toggleDataFields()">
+                <label for="evento_varios_dias">Evento de vários dias</label>
+            </div>
+        </div>
+
+        <div id="data_unico_container" class="form-group">
+            <label for="data">Data do Evento</label>
+            <input type="text" id="data" name="data" required placeholder="DD/MM/AA" pattern="\d{2}/\d{2}/\d{2}">
+        </div>
+
+        <div id="data_intervalo_container" class="form-group" style="display: none;">
+            <label for="data_inicio">De</label>
+            <input type="text" id="data_inicio" name="data_inicio" placeholder="DD/MM/AA" pattern="\d{2}/\d{2}/\d{2}">
+            
+            <label for="data_fim">a</label>
+            <input type="text" id="data_fim" name="data_fim" placeholder="DD/MM/AA" pattern="\d{2}/\d{2}/\d{2}">
+        </div>
+
+        <div class="form-group">
+            <label for="duracao">Duração (minutos):</label>
+            <input type="number" id="duracao" name="duracao" min="30" step="10" required>
+        </div>
+
+        <div class="form-group">
+            <label for="formadora">Formadora:</label>
+            <select id="formadora" name="formadora" required>
+                <option value="Ana Rita Vieira" selected>Ana Rita Vieira</option>
+                <option value="Outro">Outro</option>
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check-circle"></i> Criar Evento
+            </button>
+            <a href="{{ url_for('main.eventos') }}" class="btn btn-danger">
+                <i class="fas fa-times-circle"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleDataFields() {
+        const tipoEventoUmDia = document.getElementById('evento_um_dia').checked;
+        const dataUnicoContainer = document.getElementById('data_unico_container');
+        const dataIntervaloContainer = document.getElementById('data_intervalo_container');
+        const dataInput = document.getElementById('data');
+        const dataInicioInput = document.getElementById('data_inicio');
+        const dataFimInput = document.getElementById('data_fim');
+        
+        if (tipoEventoUmDia) {
+            dataUnicoContainer.style.display = 'block';
+            dataIntervaloContainer.style.display = 'none';
+            dataInput.required = true;
+            dataInicioInput.required = false;
+            dataFimInput.required = false;
+        } else {
+            dataUnicoContainer.style.display = 'none';
+            dataIntervaloContainer.style.display = 'block';
+            dataInput.required = false;
+            dataInicioInput.required = true;
+            dataFimInput.required = true;
+        }
+    }
+    
+    // Inicializar o estado dos campos
+    document.addEventListener('DOMContentLoaded', toggleDataFields);
+</script>
+{% endblock %}
