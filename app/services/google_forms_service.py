@@ -310,16 +310,31 @@ Formulário de inscrição para o evento:
 
             # Paginate through all results up to limit
             while len(all_forms) < limit:
-                results = drive_service.files().list(
-                    q=query,
-                    pageSize=min(100, limit - len(all_forms)),
-                    orderBy='modifiedTime desc',
-                    fields='nextPageToken, files(id, name, createdTime, modifiedTime, webViewLink, owners)',
-                    supportsAllDrives=True,
-                    includeItemsFromAllDrives=True,
-                    pageToken=page_token,
-                    corpora='allDrives'  # Search in all drives including shared drives
-                ).execute()
+                # Try 'user' first (user's drive), then 'allDrives' if needed
+                try:
+                    results = drive_service.files().list(
+                        q=query,
+                        pageSize=min(100, limit - len(all_forms)),
+                        orderBy='modifiedTime desc',
+                        fields='nextPageToken, files(id, name, createdTime, modifiedTime, webViewLink, owners)',
+                        supportsAllDrives=False,
+                        includeItemsFromAllDrives=False,
+                        pageToken=page_token,
+                        corpora='user'  # Search only in user's drive
+                    ).execute()
+                except Exception as e:
+                    print(f"Error with 'user' corpora, trying 'allDrives': {e}")
+                    # Fallback to allDrives if user doesn't work
+                    results = drive_service.files().list(
+                        q=query,
+                        pageSize=min(100, limit - len(all_forms)),
+                        orderBy='modifiedTime desc',
+                        fields='nextPageToken, files(id, name, createdTime, modifiedTime, webViewLink, owners)',
+                        supportsAllDrives=True,
+                        includeItemsFromAllDrives=True,
+                        pageToken=page_token,
+                        corpora='allDrives'
+                    ).execute()
 
                 forms = results.get('files', [])
                 if not forms:
