@@ -720,5 +720,35 @@ def remover_participante(evento_id, participante_id):
         return redirect(url_for('main.detalhe_evento', id=evento_id))
 
 
+@bp.route('/adicionar_participante/<int:evento_id>', methods=['GET', 'POST'])
+def adicionar_participante(evento_id):
+    """Add participant manually to event"""
+    evento = Event.query.get_or_404(evento_id)
+
+    if request.method == 'POST':
+        try:
+            participante = Participant(
+                evento_id=evento_id,
+                nome=request.form.get('nome', ''),
+                email=request.form.get('email', ''),
+                telefone=request.form.get('telefone', ''),
+                empresa=request.form.get('empresa', ''),
+                observacoes=request.form.get('observacoes', '')
+            )
+            db.session.add(participante)
+            db.session.commit()
+
+            flash(f'✓ Participante {participante.nome} adicionado com sucesso!', 'success')
+            return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao adicionar participante: {str(e)}', 'error')
+            import traceback
+            traceback.print_exc()
+
+    return render_template('adicionar_participante.html', evento=evento)
+
+
 # Additional routes can be added here as needed
 # These are the core routes for the beautiful frontend

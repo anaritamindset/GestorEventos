@@ -198,6 +198,9 @@
         </div>
         
         <div class="participantes-actions">
+            <a href="{{ url_for('main.adicionar_participante', evento_id=evento.id) }}" class="btn btn-success">
+                <i class="fas fa-user-plus"></i> Adicionar Participante
+            </a>
             {% if participantes %}
                 <form method="POST" action="{{ url_for('main.gerar_certificados_todos', evento_id=evento.id) }}" style="display:inline;">
                     <button type="submit" class="btn btn-warning">

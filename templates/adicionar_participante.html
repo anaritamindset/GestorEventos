@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Adicionar Participante{% endblock %}
+
+{% block additional_head %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 30px;
+        background-color: var(--background-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    h1 {
+        text-align: center;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+    .evento-info {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 15px;
+        background-color: #f0f7ff;
+        border-radius: 8px;
+        border-left: 4px solid var(--secondary-color);
+    }
+    .evento-info h2 {
+        margin: 0;
+        color: var(--text-dark);
+        font-size: 1.2em;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: var(--text-dark);
+    }
+    label .required {
+        color: #e74c3c;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: var(--border-radius);
+        font-size: 1em;
+        box-sizing: border-box;
+    }
+    textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+    input:focus,
+    textarea:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    .btn {
+        flex: 1;
+        padding: 12px 24px;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        text-align: center;
+        display: inline-block;
+    }
+    .btn-primary {
+        background-color: var(--secondary-color);
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .btn-secondary {
+        background-color: #95a5a6;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #7f8c8d;
+    }
+    .help-text {
+        font-size: 0.85em;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Adicionar Participante</h1>
+
+    <div class="evento-info">
+        <h2>{{ evento.nome }}</h2>
+        {% if evento.data_inicio %}
+            <p>{{ evento.data_inicio.strftime('%d/%m/%Y') }}</p>
+        {% endif %}
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="nome">
+                Nome Completo <span class="required">*</span>
+            </label>
+            <input
+                type="text"
+                id="nome"
+                name="nome"
+                required
+                placeholder="Ex: Ana Rita Silva"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="email">
+                Email <span class="required">*</span>
+            </label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                placeholder="Ex: ana.rita@example.com"
+            >
+            <div class="help-text">O certificado será enviado para este email</div>
+        </div>
+
+        <div class="form-group">
+            <label for="telefone">Telefone</label>
+            <input
+                type="tel"
+                id="telefone"
+                name="telefone"
+                placeholder="Ex: +351 912 345 678"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="empresa">Empresa/Organização</label>
+            <input
+                type="text"
+                id="empresa"
+                name="empresa"
+                placeholder="Ex: Mindset Wellness"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observações</label>
+            <textarea
+                id="observacoes"
+                name="observacoes"
+                placeholder="Notas adicionais sobre o participante..."
+            ></textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('main.detalhe_evento', id=evento.id) }}" class="btn btn-secondary">
+                Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+                Adicionar Participante
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
