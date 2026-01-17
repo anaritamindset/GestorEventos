@@ -617,19 +617,39 @@ def enviar_certificado(participante_id):
             flash('Certificado ainda não foi gerado', 'error')
             return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
 
-        # TODO: Implement actual email sending
-        # For now, just mark as sent
-        from datetime import datetime
-        participante.certificado_enviado = True
-        participante.data_envio_certificado = datetime.utcnow()
-        db.session.commit()
+        if not participante.certificado_path:
+            flash('Caminho do certificado não encontrado', 'error')
+            return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
 
-        flash(f'✓ Certificado enviado para {participante.email}!', 'success')
+        # Send email with certificate
+        from app.services.email_service import EmailService
+        email_service = EmailService()
+
+        success = email_service.send_certificate(
+            recipient_email=participante.email,
+            recipient_name=participante.nome,
+            event_name=participante.evento.nome,
+            certificate_path=participante.certificado_path
+        )
+
+        if success:
+            # Mark as sent
+            from datetime import datetime
+            participante.certificado_enviado = True
+            participante.data_envio_certificado = datetime.utcnow()
+            db.session.commit()
+
+            flash(f'✓ Certificado enviado para {participante.email}!', 'success')
+        else:
+            flash(f'⚠️ Erro ao enviar certificado para {participante.email}', 'error')
+
         return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
 
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao enviar certificado: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
         return redirect(request.referrer or url_for('main.eventos'))
 
 
@@ -679,18 +699,36 @@ def enviar_certificados_todos(evento_id):
             flash('Nenhum certificado para enviar', 'warning')
             return redirect(url_for('main.detalhe_evento', id=evento_id))
 
-        # TODO: Implement actual email sending
-        # For now, mark all as sent
+        # Prepare recipients list
+        recipients = []
+        for p in participantes:
+            if p.certificado_path:
+                recipients.append({
+                    'email': p.email,
+                    'name': p.nome,
+                    'event_name': evento.nome,
+                    'certificate_path': p.certificado_path
+                })
+
+        # Send emails
+        from app.services.email_service import EmailService
+        email_service = EmailService()
+        result = email_service.send_bulk_certificates(recipients)
+
+        # Mark sent certificates
         from datetime import datetime
-        count = 0
         for participante in participantes:
-            participante.certificado_enviado = True
-            participante.data_envio_certificado = datetime.utcnow()
-            count += 1
+            if participante.certificado_path:
+                participante.certificado_enviado = True
+                participante.data_envio_certificado = datetime.utcnow()
 
         db.session.commit()
 
-        flash(f'✓ {count} certificados enviados com sucesso!', 'success')
+        if result['failed'] > 0:
+            flash(f'⚠️ {result["sent"]} enviados, {result["failed"]} falharam', 'warning')
+        else:
+            flash(f'✓ {result["sent"]} certificados enviados com sucesso!', 'success')
+
         return redirect(url_for('main.detalhe_evento', id=evento_id))
 
     except Exception as e:
