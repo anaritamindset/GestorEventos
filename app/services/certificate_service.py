@@ -262,7 +262,7 @@ class CertificateService:
         # Certificate ID (small, at bottom)
         c.setFont("Helvetica", 8)
         c.setFillColor(HexColor('#9ca3af'))
-        cert_id = f"Certificado ID: {participant_id} | Evento ID: {event.id}"
+        cert_id = f"Certificado ID: {participant.id} | Evento ID: {event.id}"
         cert_id_width = c.stringWidth(cert_id, "Helvetica", 8)
         c.drawString((page_width - cert_id_width) / 2, 1.5 * cm, cert_id)
 

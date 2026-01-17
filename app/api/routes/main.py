@@ -648,8 +648,8 @@ def gerar_certificados_todos(evento_id):
         cert_service = CertificateService()
         result = cert_service.batch_generate_certificates(evento_id, base_url=base_url)
 
-        if result['errors']:
-            flash(f'⚠️ {result["generated"]} certificados gerados, {len(result["errors"])} erros', 'warning')
+        if result['errors'] > 0:
+            flash(f'⚠️ {result["generated"]} certificados gerados, {result["errors"]} erros', 'warning')
         else:
             flash(f'✓ {result["generated"]} certificados gerados com sucesso!', 'success')
 
