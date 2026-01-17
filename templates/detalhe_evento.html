@@ -174,17 +174,19 @@
                         </div>
                     </div>
                     <div class="participante-actions">
-                        {# Funcionalidades de certificados temporariamente desativadas
                         {% if not participante.certificado_gerado %}
-                            <a href="{{ url_for('main.gerar_certificado', participante_id=participante.id) }}" class="btn btn-sm btn-success">Gerar Certificado</a>
+                            <form method="POST" action="{{ url_for('main.gerar_certificado', participante_id=participante.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-success">Gerar Certificado</button>
+                            </form>
                         {% endif %}
                         {% if participante.certificado_gerado and not participante.certificado_enviado %}
-                            <a href="{{ url_for('main.enviar_certificado', participante_id=participante.id) }}" class="btn btn-sm btn-info">Enviar Certificado</a>
+                            <form method="POST" action="{{ url_for('main.enviar_certificado', participante_id=participante.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-info">Enviar Certificado</button>
+                            </form>
                         {% endif %}
                         <form method="POST" action="{{ url_for('main.remover_participante', evento_id=evento.id, participante_id=participante.id) }}" style="display:inline;">
                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja remover este participante?')">Remover</button>
                         </form>
-                        #}
                     </div>
                 </div>
                 {% endfor %}
@@ -196,22 +198,18 @@
         </div>
         
         <div class="participantes-actions">
-            {# Funcionalidades de gestão de participantes temporariamente desativadas
-            <a href="{{ url_for('main.adicionar_participantes', evento_id=evento.id) }}" class="btn btn-success">
-                <i class="fas fa-user-plus"></i> Adicionar Participantes
-            </a>
-            <a href="{{ url_for('main.importar_participantes', evento_id=evento.id) }}" class="btn btn-info">
-                <i class="fas fa-file-excel"></i> Importar Participantes
-            </a>
             {% if participantes %}
-                <a href="{{ url_for('main.gerar_certificados_todos', evento_id=evento.id) }}" class="btn btn-warning">
-                    <i class="fas fa-certificate"></i> Gerar Todos Certificados
-                </a>
-                <a href="{{ url_for('main.enviar_certificados_todos', evento_id=evento.id) }}" class="btn btn-primary">
-                    <i class="fas fa-paper-plane"></i> Enviar Todos Certificados
-                </a>
+                <form method="POST" action="{{ url_for('main.gerar_certificados_todos', evento_id=evento.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-certificate"></i> Gerar Todos Certificados
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('main.enviar_certificados_todos', evento_id=evento.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Enviar Todos Certificados
+                    </button>
+                </form>
             {% endif %}
-            #}
         </div>
     </div>
 </div>

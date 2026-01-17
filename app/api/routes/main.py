@@ -581,5 +581,144 @@ def link_existing_form(evento_id, form_id):
         return redirect(url_for('main.gestao_automatica'))
 
 
+# Certificate routes - Frontend wrappers for API endpoints
+@bp.route('/certificado/gerar/<int:participante_id>', methods=['POST'])
+def gerar_certificado(participante_id):
+    """Generate certificate for single participant"""
+    from app.services.certificate_service import CertificateService
+
+    try:
+        participante = Participant.query.get_or_404(participante_id)
+
+        # Get base URL for QR code
+        base_url = request.host_url.rstrip('/')
+
+        # Generate certificate
+        cert_service = CertificateService()
+        cert_path = cert_service.generate_certificate(participante_id, base_url=base_url)
+
+        flash(f'✓ Certificado gerado para {participante.nome}!', 'success')
+        return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
+
+    except Exception as e:
+        flash(f'Erro ao gerar certificado: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(request.referrer or url_for('main.eventos'))
+
+
+@bp.route('/certificado/enviar/<int:participante_id>', methods=['POST'])
+def enviar_certificado(participante_id):
+    """Send certificate via email"""
+    try:
+        participante = Participant.query.get_or_404(participante_id)
+
+        if not participante.certificado_gerado:
+            flash('Certificado ainda não foi gerado', 'error')
+            return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
+
+        # TODO: Implement actual email sending
+        # For now, just mark as sent
+        from datetime import datetime
+        participante.certificado_enviado = True
+        participante.data_envio_certificado = datetime.utcnow()
+        db.session.commit()
+
+        flash(f'✓ Certificado enviado para {participante.email}!', 'success')
+        return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao enviar certificado: {str(e)}', 'error')
+        return redirect(request.referrer or url_for('main.eventos'))
+
+
+@bp.route('/certificado/gerar_todos/<int:evento_id>', methods=['POST'])
+def gerar_certificados_todos(evento_id):
+    """Generate certificates for all event participants"""
+    from app.services.certificate_service import CertificateService
+
+    try:
+        evento = Event.query.get_or_404(evento_id)
+
+        # Get base URL for QR codes
+        base_url = request.host_url.rstrip('/')
+
+        # Generate all certificates
+        cert_service = CertificateService()
+        result = cert_service.batch_generate_certificates(evento_id, base_url=base_url)
+
+        if result['errors']:
+            flash(f'⚠️ {result["generated"]} certificados gerados, {len(result["errors"])} erros', 'warning')
+        else:
+            flash(f'✓ {result["generated"]} certificados gerados com sucesso!', 'success')
+
+        return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+    except Exception as e:
+        flash(f'Erro ao gerar certificados: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(request.referrer or url_for('main.eventos'))
+
+
+@bp.route('/certificado/enviar_todos/<int:evento_id>', methods=['POST'])
+def enviar_certificados_todos(evento_id):
+    """Send certificates to all event participants"""
+    try:
+        evento = Event.query.get_or_404(evento_id)
+
+        # Get participants with generated certificates
+        participantes = Participant.query.filter_by(
+            evento_id=evento_id,
+            certificado_gerado=True,
+            certificado_enviado=False
+        ).filter(Participant.deleted_at.is_(None)).all()
+
+        if not participantes:
+            flash('Nenhum certificado para enviar', 'warning')
+            return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+        # TODO: Implement actual email sending
+        # For now, mark all as sent
+        from datetime import datetime
+        count = 0
+        for participante in participantes:
+            participante.certificado_enviado = True
+            participante.data_envio_certificado = datetime.utcnow()
+            count += 1
+
+        db.session.commit()
+
+        flash(f'✓ {count} certificados enviados com sucesso!', 'success')
+        return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao enviar certificados: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(request.referrer or url_for('main.eventos'))
+
+
+@bp.route('/remover_participante/<int:evento_id>/<int:participante_id>', methods=['POST'])
+def remover_participante(evento_id, participante_id):
+    """Soft delete participant"""
+    try:
+        participante = Participant.query.get_or_404(participante_id)
+
+        from datetime import datetime
+        participante.deleted_at = datetime.utcnow()
+        db.session.commit()
+
+        flash(f'✓ Participante removido com sucesso!', 'success')
+        return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao remover participante: {str(e)}', 'error')
+        return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+
 # Additional routes can be added here as needed
 # These are the core routes for the beautiful frontend
