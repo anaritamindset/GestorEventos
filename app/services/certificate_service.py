@@ -222,7 +222,7 @@ class CertificateService:
         details_y = page_height - 12.5 * cm
         details = [
             f"Data: {data_str}",
-            f"Duração: {event.duracao_horas} horas",
+            f"Duração: {event.duracao_minutos} minutos",
         ]
 
         if event.local:

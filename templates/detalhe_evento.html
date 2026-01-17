@@ -135,7 +135,7 @@
         {% else %}
             <p><strong>Data:</strong> {{ evento.data_inicio.strftime('%d/%m/%Y') }}</p>
         {% endif %}
-        <p><strong>Duração:</strong> {{ evento.duracao_horas }} horas</p>
+        <p><strong>Duração:</strong> {{ evento.duracao_minutos }} minutos</p>
         {% if evento.formadora is defined and evento.formadora %}
             <p><strong>Formadora:</strong> {{ evento.formadora }}</p>
         {% else %}

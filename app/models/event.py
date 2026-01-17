@@ -18,7 +18,7 @@ class Event(db.Model):
     # Dates
     data_inicio = db.Column(db.Date, nullable=False, index=True)
     data_fim = db.Column(db.Date, nullable=True)
-    duracao_horas = db.Column(db.Integer, nullable=False)
+    duracao_minutos = db.Column(db.Integer, nullable=False)
 
     # Event details
     local = db.Column(db.String(200), nullable=True)
@@ -81,7 +81,7 @@ class Event(db.Model):
             'descricao': self.descricao,
             'data_inicio': self.data_inicio.isoformat() if self.data_inicio else None,
             'data_fim': self.data_fim.isoformat() if self.data_fim else None,
-            'duracao_horas': self.duracao_horas,
+            'duracao_minutos': self.duracao_minutos,
             'local': self.local,
             'formadora': self.formadora,
             'tipo_evento': self.tipo_evento,

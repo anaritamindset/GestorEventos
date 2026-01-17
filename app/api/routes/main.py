@@ -89,7 +89,7 @@ def criar_evento():
                 nome=request.form['nome'],
                 data_inicio=data_inicio,
                 data_fim=data_fim,
-                duracao_horas=int(request.form.get('duracao', 1)),
+                duracao_minutos=int(request.form.get('duracao', 60)),
                 descricao=request.form.get('descricao', ''),
                 formadora=request.form.get('formadora', '')
             )
@@ -149,16 +149,15 @@ def criar_evento_from_excel():
                 if data_fim and hasattr(data_fim, 'date'):
                     data_fim = data_fim.date()
 
-                # Convert duration from minutes to hours
+                # Get duration in minutes
                 duracao_minutos = event_data.get('duracao', 60)
-                duracao_horas = int(duracao_minutos / 60) if duracao_minutos >= 60 else 1
 
                 # Create event
                 evento = Event(
                     nome=event_data.get('nome', 'Evento Importado'),
                     data_inicio=data_inicio,
                     data_fim=data_fim,
-                    duracao_horas=duracao_horas,
+                    duracao_minutos=duracao_minutos,
                     descricao=event_data.get('descricao', ''),
                     formadora=event_data.get('formadora', ''),
                     local=event_data.get('local', '')
@@ -210,15 +209,14 @@ def criar_evento_from_excel():
             if data_fim and hasattr(data_fim, 'date'):
                 data_fim = data_fim.date()
 
-            # Convert duration from minutes to hours
+            # Get duration in minutes
             duracao_minutos = event_data.get('duracao', 60)
-            duracao_horas = int(duracao_minutos / 60) if duracao_minutos >= 60 else 1
 
             evento = Event(
                 nome=event_data.get('nome', 'Evento Importado'),
                 data_inicio=data_inicio,
                 data_fim=data_fim,
-                duracao_horas=duracao_horas,
+                duracao_minutos=duracao_minutos,
                 descricao=event_data.get('descricao', ''),
                 formadora=event_data.get('formadora', ''),
                 local=event_data.get('local', '')
@@ -281,7 +279,7 @@ def editar_evento(id):
             else:
                 evento.data_fim = None
 
-            evento.duracao_horas = int(request.form.get('duracao', 1))
+            evento.duracao_minutos = int(request.form.get('duracao', 1))
             evento.descricao = request.form.get('descricao', '')
             evento.formadora = request.form.get('formadora', '')
             db.session.commit()
