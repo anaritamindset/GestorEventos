@@ -102,6 +102,13 @@
         background-color: #3498db;
         color: white;
     }
+    .btn-primary {
+        background-color: #2c3e50;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #1a252f;
+    }
     .empty-message {
         text-align: center;
         padding: 20px;
@@ -176,16 +183,27 @@
                     <div class="participante-actions">
                         {% if not participante.certificado_gerado %}
                             <form method="POST" action="{{ url_for('main.gerar_certificado', participante_id=participante.id) }}" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-success">Gerar Certificado</button>
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fas fa-file-pdf"></i> Gerar Certificado
+                                </button>
                             </form>
+                        {% endif %}
+                        {% if participante.certificado_gerado %}
+                            <a href="{{ url_for('main.download_certificado', participante_id=participante.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-download"></i> Download
+                            </a>
                         {% endif %}
                         {% if participante.certificado_gerado and not participante.certificado_enviado %}
                             <form method="POST" action="{{ url_for('main.enviar_certificado', participante_id=participante.id) }}" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-info">Enviar Certificado</button>
+                                <button type="submit" class="btn btn-sm btn-info">
+                                    <i class="fas fa-envelope"></i> Enviar Email
+                                </button>
                             </form>
                         {% endif %}
                         <form method="POST" action="{{ url_for('main.remover_participante', evento_id=evento.id, participante_id=participante.id) }}" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja remover este participante?')">Remover</button>
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja remover este participante?')">
+                                <i class="fas fa-trash"></i> Remover
+                            </button>
                         </form>
                     </div>
                 </div>

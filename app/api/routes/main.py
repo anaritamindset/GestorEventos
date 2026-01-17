@@ -739,6 +739,38 @@ def enviar_certificados_todos(evento_id):
         return redirect(request.referrer or url_for('main.eventos'))
 
 
+@bp.route('/certificado/download/<int:participante_id>', methods=['GET'])
+def download_certificado(participante_id):
+    """Download generated certificate PDF"""
+    try:
+        participante = Participant.query.get_or_404(participante_id)
+
+        if not participante.certificado_gerado or not participante.certificado_path:
+            flash('Certificado não encontrado ou ainda não foi gerado', 'error')
+            return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
+
+        # Check if file exists
+        import os
+        if not os.path.exists(participante.certificado_path):
+            flash('Arquivo de certificado não encontrado', 'error')
+            return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
+
+        # Send file for download
+        from flask import send_file
+        return send_file(
+            participante.certificado_path,
+            as_attachment=True,
+            download_name=f'Certificado_{participante.nome.replace(" ", "_")}.pdf',
+            mimetype='application/pdf'
+        )
+
+    except Exception as e:
+        flash(f'Erro ao fazer download do certificado: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+        return redirect(request.referrer or url_for('main.eventos'))
+
+
 @bp.route('/remover_participante/<int:evento_id>/<int:participante_id>', methods=['POST'])
 def remover_participante(evento_id, participante_id):
     """Soft delete participant"""
