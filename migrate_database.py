@@ -7,15 +7,45 @@ Executar no PythonAnywhere: python migrate_database.py
 import sqlite3
 import os
 
+def find_database():
+    """Encontra a base de dados SQLite"""
+    possible_paths = [
+        'instance/gestor_eventos.db',
+        'gestor_eventos.db',
+        'app.db',
+        'instance/app.db',
+        '../gestor_eventos.db',
+    ]
+
+    # Procurar ficheiros .db no diretório atual
+    import glob
+    db_files = glob.glob('**/*.db', recursive=True)
+
+    if db_files:
+        print(f"📂 Bases de dados encontradas: {', '.join(db_files)}")
+        possible_paths = db_files + possible_paths
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            return path
+
+    return None
+
+
 def migrate_database():
     """Migra a base de dados de duracao_horas para duracao_minutos"""
 
-    # Caminho para a base de dados
-    db_path = 'instance/gestor_eventos.db'
+    # Procurar a base de dados
+    db_path = find_database()
 
-    if not os.path.exists(db_path):
-        print(f"❌ Base de dados não encontrada em: {db_path}")
+    if not db_path:
+        print("❌ Base de dados não encontrada!")
+        print("\n🔍 Por favor, execute o seguinte comando para encontrar a base de dados:")
+        print("   find . -name '*.db' -type f")
+        print("\nDepois edite o script e coloque o caminho correto na variável db_path")
         return False
+
+    print(f"✅ Base de dados encontrada: {db_path}")
 
     print(f"📂 Conectando à base de dados: {db_path}")
     conn = sqlite3.connect(db_path)
