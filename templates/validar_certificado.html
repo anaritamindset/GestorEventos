@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Validação de Certificado{% endblock %}
+
+{% block additional_head %}
+<style>
+    .validation-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 40px;
+        background-color: var(--background-light);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        text-align: center;
+    }
+    .validation-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+    }
+    .validation-icon.valid {
+        color: #2ecc71;
+    }
+    .validation-icon.invalid {
+        color: #e74c3c;
+    }
+    .validation-title {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    .validation-title.valid {
+        color: #2ecc71;
+    }
+    .validation-title.invalid {
+        color: #e74c3c;
+    }
+    .validation-message {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 30px;
+    }
+    .certificate-details {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 25px;
+        margin-top: 25px;
+        text-align: left;
+    }
+    .certificate-details h3 {
+        color: var(--primary-color);
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .detail-row {
+        display: flex;
+        margin-bottom: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    .detail-label {
+        font-weight: bold;
+        color: #555;
+        width: 140px;
+        flex-shrink: 0;
+    }
+    .detail-value {
+        color: #333;
+        flex-grow: 1;
+    }
+    .mindset-logo {
+        margin-top: 30px;
+        opacity: 0.7;
+    }
+    .back-link {
+        margin-top: 30px;
+        display: inline-block;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: bold;
+    }
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="validation-container">
+    {% if valid %}
+        <div class="validation-icon valid">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1 class="validation-title valid">Certificado Válido</h1>
+        <p class="validation-message">
+            Este certificado é autêntico e foi emitido pela Mindset & Wellness.
+        </p>
+
+        <div class="certificate-details">
+            <h3>Detalhes do Certificado</h3>
+
+            <div class="detail-row">
+                <span class="detail-label">Participante:</span>
+                <span class="detail-value">{{ participante.nome }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Email:</span>
+                <span class="detail-value">{{ participante.email }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Evento:</span>
+                <span class="detail-value">{{ evento.nome }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Data do Evento:</span>
+                <span class="detail-value">
+                    {% if evento.data_fim %}
+                        {{ evento.data_inicio.strftime('%d/%m/%Y') }} a {{ evento.data_fim.strftime('%d/%m/%Y') }}
+                    {% else %}
+                        {{ evento.data_inicio.strftime('%d/%m/%Y') }}
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Duração:</span>
+                <span class="detail-value">{{ evento.duracao_minutos }} minutos</span>
+            </div>
+
+            {% if evento.formadora %}
+            <div class="detail-row">
+                <span class="detail-label">Formador(a):</span>
+                <span class="detail-value">{{ evento.formadora }}</span>
+            </div>
+            {% endif %}
+
+            <div class="detail-row">
+                <span class="detail-label">ID do Certificado:</span>
+                <span class="detail-value">#{{ participante.id }}</span>
+            </div>
+        </div>
+
+        <div class="mindset-logo">
+            <p style="color: #999; font-size: 14px;">
+                Certificado emitido por<br>
+                <strong style="color: #666;">Mindset & Wellness</strong>
+            </p>
+        </div>
+
+    {% else %}
+        <div class="validation-icon invalid">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        <h1 class="validation-title invalid">Certificado Inválido</h1>
+        <p class="validation-message">
+            {{ message }}
+        </p>
+        <p style="color: #999; font-size: 14px; margin-top: 20px;">
+            Se você acredita que isto é um erro, entre em contato com a Mindset & Wellness.
+        </p>
+    {% endif %}
+
+    <a href="{{ url_for('main.index') }}" class="back-link">
+        <i class="fas fa-home"></i> Voltar à página inicial
+    </a>
+</div>
+{% endblock %}

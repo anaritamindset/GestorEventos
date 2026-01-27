@@ -181,6 +181,9 @@
                         </div>
                     </div>
                     <div class="participante-actions">
+                        <a href="{{ url_for('main.editar_participante', participante_id=participante.id) }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
                         {% if not participante.certificado_gerado %}
                             <form method="POST" action="{{ url_for('main.gerar_certificado', participante_id=participante.id) }}" style="display:inline;">
                                 <button type="submit" class="btn btn-sm btn-success">

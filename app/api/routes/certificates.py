@@ -18,7 +18,7 @@ cert_service = CertificateService()
 
 @bp.route('/generate/<int:participant_id>', methods=['POST'])
 def generate_certificate(participant_id):
-    """Generate certificate for participant with QR code"""
+    """Generate certificate for participant"""
     try:
         participant = Participant.query.get_or_404(participant_id)
 
@@ -28,13 +28,11 @@ def generate_certificate(participant_id):
         # Get optional parameters
         data = request.get_json() if request.is_json else {}
         template_id = data.get('template_id')
-        base_url = data.get('base_url', request.url_root.rstrip('/'))
 
-        # Generate certificate with QR code
+        # Generate certificate
         filepath = cert_service.generate_certificate(
             participant_id=participant_id,
-            template_id=template_id,
-            base_url=base_url
+            template_id=template_id
         )
 
         # Update participant record
@@ -68,13 +66,11 @@ def generate_event_certificates(event_id):
         # Get optional parameters
         data = request.get_json() if request.is_json else {}
         template_id = data.get('template_id')
-        base_url = data.get('base_url', request.url_root.rstrip('/'))
 
         # Batch generate certificates
         stats = cert_service.batch_generate_certificates(
             event_id=event_id,
-            template_id=template_id,
-            base_url=base_url
+            template_id=template_id
         )
 
         logger.info(f"Batch certificate generation for event {event_id}: {stats}")

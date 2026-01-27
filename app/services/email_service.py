@@ -50,7 +50,7 @@ class EmailService:
         try:
             # Create message
             msg = MIMEMultipart()
-            msg['From'] = self.email_user
+            msg['From'] = f"Ana Rita - Mindset & Wellness <{self.email_user}>"
             msg['To'] = recipient_email
             msg['Subject'] = f"Certificado de Participação - {event_name}"
 

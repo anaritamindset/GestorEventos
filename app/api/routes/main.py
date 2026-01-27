@@ -140,10 +140,20 @@ def criar_evento_from_excel():
                 event_data = event_item['event']
                 participants_data = event_item['participants']
 
+                # Validate required fields
+                nome = event_data.get('nome', '').strip()
+                if not nome:
+                    flash('⚠️ Nome do evento é obrigatório. Evento ignorado.', 'warning')
+                    continue
+
                 # Convert dates
                 data_inicio = event_data.get('data') or event_data.get('data_inicio')
                 if data_inicio and hasattr(data_inicio, 'date'):
                     data_inicio = data_inicio.date()
+
+                if not data_inicio:
+                    flash(f'⚠️ Data de início é obrigatória para o evento "{nome}". Evento ignorado.', 'warning')
+                    continue
 
                 data_fim = event_data.get('data_fim')
                 if data_fim and hasattr(data_fim, 'date'):
@@ -154,7 +164,7 @@ def criar_evento_from_excel():
 
                 # Create event
                 evento = Event(
-                    nome=event_data.get('nome', 'Evento Importado'),
+                    nome=nome,
                     data_inicio=data_inicio,
                     data_fim=data_fim,
                     duracao_minutos=duracao_minutos,
@@ -200,10 +210,20 @@ def criar_evento_from_excel():
             print(f"Event data: {event_data}")
             print(f"Participants count: {len(participants_data)}")
 
+            # Validate required fields
+            nome = event_data.get('nome', '').strip()
+            if not nome:
+                flash('⚠️ Nome do evento é obrigatório', 'error')
+                return redirect(url_for('main.criar_evento'))
+
             # Convert dates
             data_inicio = event_data.get('data') or event_data.get('data_inicio')
             if data_inicio and hasattr(data_inicio, 'date'):
                 data_inicio = data_inicio.date()
+
+            if not data_inicio:
+                flash('⚠️ Data de início é obrigatória', 'error')
+                return redirect(url_for('main.criar_evento'))
 
             data_fim = event_data.get('data_fim')
             if data_fim and hasattr(data_fim, 'date'):
@@ -213,7 +233,7 @@ def criar_evento_from_excel():
             duracao_minutos = event_data.get('duracao', 60)
 
             evento = Event(
-                nome=event_data.get('nome', 'Evento Importado'),
+                nome=nome,
                 data_inicio=data_inicio,
                 data_fim=data_fim,
                 duracao_minutos=duracao_minutos,
@@ -588,12 +608,9 @@ def gerar_certificado(participante_id):
     try:
         participante = Participant.query.get_or_404(participante_id)
 
-        # Get base URL for QR code
-        base_url = request.host_url.rstrip('/')
-
         # Generate certificate
         cert_service = CertificateService()
-        cert_path = cert_service.generate_certificate(participante_id, base_url=base_url)
+        cert_path = cert_service.generate_certificate(participante_id)
 
         flash(f'✓ Certificado gerado para {participante.nome}!', 'success')
         return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
@@ -659,12 +676,9 @@ def gerar_certificados_todos(evento_id):
     try:
         evento = Event.query.get_or_404(evento_id)
 
-        # Get base URL for QR codes
-        base_url = request.host_url.rstrip('/')
-
         # Generate all certificates
         cert_service = CertificateService()
-        result = cert_service.batch_generate_certificates(evento_id, base_url=base_url)
+        result = cert_service.batch_generate_certificates(evento_id)
 
         if result['errors'] > 0:
             flash(f'⚠️ {result["generated"]} certificados gerados, {result["errors"]} erros', 'warning')
@@ -795,10 +809,35 @@ def adicionar_participante(evento_id):
 
     if request.method == 'POST':
         try:
+            email = request.form.get('email', '')
+
+            # Check if participant already exists (including soft-deleted)
+            existing = Participant.query.filter_by(
+                evento_id=evento_id,
+                email=email
+            ).first()
+
+            if existing:
+                if existing.deleted_at:
+                    # Reactivate soft-deleted participant
+                    from datetime import datetime
+                    existing.nome = request.form.get('nome', '')
+                    existing.telefone = request.form.get('telefone', '')
+                    existing.empresa = request.form.get('empresa', '')
+                    existing.observacoes = request.form.get('observacoes', '')
+                    existing.deleted_at = None
+                    existing.updated_at = datetime.utcnow()
+                    db.session.commit()
+                    flash(f'✓ Participante {existing.nome} reativado com sucesso!', 'success')
+                else:
+                    flash(f'⚠️ Participante com email {email} já existe neste evento!', 'warning')
+                return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+            # Create new participant
             participante = Participant(
                 evento_id=evento_id,
                 nome=request.form.get('nome', ''),
-                email=request.form.get('email', ''),
+                email=email,
                 telefone=request.form.get('telefone', ''),
                 empresa=request.form.get('empresa', ''),
                 observacoes=request.form.get('observacoes', '')
@@ -816,6 +855,61 @@ def adicionar_participante(evento_id):
             traceback.print_exc()
 
     return render_template('adicionar_participante.html', evento=evento)
+
+
+@bp.route('/editar_participante/<int:participante_id>', methods=['GET', 'POST'])
+def editar_participante(participante_id):
+    """Edit participant details and status"""
+    participante = Participant.query.get_or_404(participante_id)
+
+    if request.method == 'POST':
+        try:
+            participante.nome = request.form.get('nome', '')
+            participante.email = request.form.get('email', '')
+            participante.status = request.form.get('status', 'pendente')
+            participante.telefone = request.form.get('telefone', '')
+            participante.empresa = request.form.get('empresa', '')
+
+            db.session.commit()
+
+            flash(f'✓ Participante {participante.nome} atualizado com sucesso!', 'success')
+            return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar participante: {str(e)}', 'error')
+            import traceback
+            traceback.print_exc()
+
+    return render_template('editar_participante.html', participante=participante)
+
+
+@bp.route('/validate/certificate/<int:participant_id>')
+def validate_certificate(participant_id):
+    """Validate certificate via QR code"""
+    participante = Participant.query.get(participant_id)
+
+    if not participante or participante.deleted_at:
+        return render_template('validar_certificado.html',
+                             valid=False,
+                             message="Certificado não encontrado ou inválido")
+
+    if not participante.certificado_gerado:
+        return render_template('validar_certificado.html',
+                             valid=False,
+                             message="Certificado não foi gerado para este participante")
+
+    evento = Event.query.get(participante.evento_id)
+    if not evento or evento.deleted_at:
+        return render_template('validar_certificado.html',
+                             valid=False,
+                             message="Evento não encontrado")
+
+    # Certificate is valid
+    return render_template('validar_certificado.html',
+                         valid=True,
+                         participante=participante,
+                         evento=evento)
 
 
 # Additional routes can be added here as needed

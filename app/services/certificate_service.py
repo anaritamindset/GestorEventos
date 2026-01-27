@@ -1,11 +1,9 @@
 """
-Certificate Service - Handles PDF certificate generation with QR codes
+Certificate Service - Handles PDF certificate generation
 """
 
 import os
 import logging
-import qrcode
-from io import BytesIO
 from datetime import datetime
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.pdfgen import canvas
@@ -13,14 +11,14 @@ from reportlab.lib.units import cm
 from reportlab.lib.colors import HexColor
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Image
+from reportlab.lib.utils import ImageReader
 from app.models import Participant, Event, CertificateTemplate
 
 logger = logging.getLogger(__name__)
 
 
 class CertificateService:
-    """Service to generate PDF certificates with QR codes"""
+    """Service to generate PDF certificates"""
 
     def __init__(self, output_dir='certificados'):
         self.output_dir = output_dir
@@ -52,37 +50,13 @@ class CertificateService:
             logger.warning(f"Font registration failed: {e}")
             logger.info("Will use default ReportLab fonts")
 
-    def generate_qr_code(self, data, size=200):
-        """
-        Generate QR code image
-
-        Args:
-            data: Data to encode in QR code (usually validation URL)
-            size: Size of QR code in pixels
-
-        Returns:
-            PIL Image object
-        """
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(data)
-        qr.make(fit=True)
-
-        img = qr.make_image(fill_color="black", back_color="white")
-        return img
-
-    def generate_certificate(self, participant_id, template_id=None, base_url='http://localhost:5000'):
+    def generate_certificate(self, participant_id, template_id=None):
         """
         Generate certificate PDF for a participant
 
         Args:
             participant_id: Participant ID
             template_id: Optional template ID (uses default if None)
-            base_url: Base URL for validation links
 
         Returns:
             Path to generated PDF file
@@ -112,41 +86,68 @@ class CertificateService:
         filename = f"certificado_{participant_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         filepath = os.path.join(self.output_dir, filename)
 
-        # Generate QR code with validation URL
-        validation_url = f"{base_url}/validate/certificate/{participant_id}"
-        qr_img = self.generate_qr_code(validation_url)
-
-        # Save QR code temporarily
-        qr_buffer = BytesIO()
-        qr_img.save(qr_buffer, format='PNG')
-        qr_buffer.seek(0)
-
         # Create PDF
         self._create_pdf(
             filepath=filepath,
             participant=participant,
             event=event,
-            qr_buffer=qr_buffer,
             config=config
         )
 
         logger.info(f"Certificate generated: {filepath}")
         return filepath
 
-    def _create_pdf(self, filepath, participant, event, qr_buffer, config):
-        """Create the actual PDF certificate"""
-        # Use landscape A4
-        page_width, page_height = landscape(A4)
+    def _center_text(self, c, text, y, font, size):
+        """Helper to center text horizontally"""
+        text_width = c.stringWidth(text, font, size)
+        page_width, _ = landscape(A4)
+        return (page_width - text_width) / 2, text_width
 
-        # Create canvas
+    def _draw_centered_text(self, c, text, y, font, size, color):
+        """Draw centered text at specified y position"""
+        c.setFont(font, size)
+        c.setFillColor(color)
+        x, _ = self._center_text(c, text, y, font, size)
+        c.drawString(x, y, text)
+
+    def _get_absolute_path(self, relative_path):
+        """Convert relative path to absolute path based on project root"""
+        if os.path.isabs(relative_path):
+            return relative_path
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        return os.path.join(project_root, relative_path)
+
+    def _create_pdf(self, filepath, participant, event, config):
+        """Create the actual PDF certificate"""
+        page_width, page_height = landscape(A4)
         c = canvas.Canvas(filepath, pagesize=landscape(A4))
 
-        # Colors
-        primary_color = HexColor(config.get('primary_color', '#1e3a8a'))
-        secondary_color = HexColor(config.get('secondary_color', '#3b82f6'))
+        # Extract colors from config
+        primary_color = HexColor(config.get('primary_color', '#9DB5A5'))
+        secondary_color = HexColor(config.get('secondary_color', '#C8B8D8'))
         text_color = HexColor(config.get('text_color', '#1f2937'))
 
-        # Draw border
+        # Logo first (will be behind borders)
+        current_y = page_height - 6 * cm
+
+        if config.get('include_logo') and config.get('logo_path'):
+            logo_path = self._get_absolute_path(config.get('logo_path'))
+
+            if os.path.exists(logo_path):
+                try:
+                    logo_size = 5 * cm
+                    logo_x = (page_width - logo_size) / 2
+                    c.drawImage(ImageReader(logo_path), logo_x, current_y,
+                               width=logo_size, height=logo_size)
+                    current_y -= 0.2 * cm  # Small padding below logo
+                    logger.info(f"Logo added from {logo_path}")
+                except Exception as e:
+                    logger.error(f"Could not add logo: {e}")
+            else:
+                logger.warning(f"Logo not found: {logo_path}")
+
+        # Draw borders (on top of logo)
         border_margin = 1.5 * cm
         c.setStrokeColor(primary_color)
         c.setLineWidth(3)
@@ -163,108 +164,99 @@ class CertificateService:
                page_height - 2 * inner_margin)
 
         # Title
-        c.setFont("Helvetica-Bold", 32)
-        c.setFillColor(primary_color)
-        title_text = "CERTIFICADO DE PARTICIPAÇÃO"
-        title_width = c.stringWidth(title_text, "Helvetica-Bold", 32)
-        c.drawString((page_width - title_width) / 2, page_height - 4 * cm, title_text)
+        current_y -= 0.3 * cm  # Closer to logo
+        self._draw_centered_text(c, "CERTIFICADO DE PARTICIPAÇÃO", current_y,
+                                "Helvetica-Bold", 32, primary_color)
 
-        # Line under title
-        c.setStrokeColor(secondary_color)
-        c.setLineWidth(2)
-        c.line(page_width * 0.3, page_height - 4.5 * cm,
-               page_width * 0.7, page_height - 4.5 * cm)
+        # Main certificate text with bold formatting
+        current_y -= 2 * cm
 
-        # Intro text
-        c.setFont("Helvetica", 14)
-        c.setFillColor(text_color)
-        intro_text = "Certificamos que"
-        intro_width = c.stringWidth(intro_text, "Helvetica", 14)
-        c.drawString((page_width - intro_width) / 2, page_height - 6 * cm, intro_text)
+        # Build event details inline - data por extenso
+        meses = {
+            1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
+            5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
+            9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+        }
 
-        # Participant name (highlighted)
-        c.setFont("Helvetica-Bold", 24)
-        c.setFillColor(primary_color)
-        name_text = participant.nome
-        name_width = c.stringWidth(name_text, "Helvetica-Bold", 24)
-        c.drawString((page_width - name_width) / 2, page_height - 7.5 * cm, name_text)
+        dia = event.data_inicio.day
+        mes = meses[event.data_inicio.month]
+        ano = event.data_inicio.year
+        data_str = f"{dia} de {mes} de {ano}"
 
-        # Line under name
-        name_line_width = name_width + 2 * cm
-        c.setStrokeColor(secondary_color)
-        c.setLineWidth(1)
-        c.line((page_width - name_line_width) / 2, page_height - 8 * cm,
-               (page_width + name_line_width) / 2, page_height - 8 * cm)
-
-        # Event description
-        c.setFont("Helvetica", 14)
-        c.setFillColor(text_color)
-
-        event_text_1 = "participou do evento"
-        event_text_1_width = c.stringWidth(event_text_1, "Helvetica", 14)
-        c.drawString((page_width - event_text_1_width) / 2, page_height - 9.5 * cm, event_text_1)
-
-        c.setFont("Helvetica-Bold", 18)
-        c.setFillColor(primary_color)
-        event_name_text = event.nome
-        event_name_width = c.stringWidth(event_name_text, "Helvetica-Bold", 18)
-        c.drawString((page_width - event_name_width) / 2, page_height - 11 * cm, event_name_text)
-
-        # Event details
-        c.setFont("Helvetica", 12)
-        c.setFillColor(text_color)
-
-        # Date
-        data_str = event.data_inicio.strftime('%d/%m/%Y')
         if event.data_fim and event.data_fim != event.data_inicio:
-            data_str += f" a {event.data_fim.strftime('%d/%m/%Y')}"
+            dia_fim = event.data_fim.day
+            mes_fim = meses[event.data_fim.month]
+            ano_fim = event.data_fim.year
+            data_str += f" a {dia_fim} de {mes_fim} de {ano_fim}"
 
-        details_y = page_height - 12.5 * cm
-        details = [
-            f"Data: {data_str}",
-            f"Duração: {event.duracao_minutos} minutos",
+        # Create full text with parts
+        text_parts = [
+            ("Certificamos que ", "Helvetica", 16, text_color),
+            (f"{participant.nome}", "Helvetica-Bold", 16, primary_color),
+            (", participou no evento ", "Helvetica", 16, text_color),
+            (f"{event.nome}", "Helvetica-Bold", 16, primary_color),
+            (f", realizado a {data_str},", "Helvetica", 16, text_color),
+            (f"com a duração de {event.duracao_minutos} minutos", "Helvetica", 16, text_color),
         ]
 
-        if event.local:
-            details.append(f"Local: {event.local}")
-
+        # Add optional formadora
         if event.formadora:
-            details.append(f"Formador(a): {event.formadora}")
+            text_parts.append((f", ministrado por ", "Helvetica", 16, text_color))
+            text_parts.append((f"{event.formadora}", "Helvetica-Bold", 16, primary_color))
 
-        for detail in details:
-            detail_width = c.stringWidth(detail, "Helvetica", 12)
-            c.drawString((page_width - detail_width) / 2, details_y, detail)
-            details_y -= 0.7 * cm
+        text_parts.append((".", "Helvetica", 16, text_color))
 
-        # QR Code
-        qr_size = 3 * cm
-        qr_x = page_width - 4 * cm
-        qr_y = 2.5 * cm
+        # Calculate total width and wrap if needed
+        max_width = page_width - 6 * cm
+        current_line = []
+        current_line_width = 0
+        lines = []
 
-        # Draw QR code image
-        img = Image(qr_buffer, width=qr_size, height=qr_size)
-        img.drawOn(c, qr_x, qr_y)
+        for text, font, size, color in text_parts:
+            text_width = c.stringWidth(text, font, size)
 
-        # QR code label
-        c.setFont("Helvetica", 8)
-        c.setFillColor(text_color)
-        qr_label = "Valide este certificado"
-        qr_label_width = c.stringWidth(qr_label, "Helvetica", 8)
-        c.drawString(qr_x + (qr_size - qr_label_width) / 2, qr_y - 0.5 * cm, qr_label)
+            if current_line_width + text_width > max_width and current_line:
+                lines.append(current_line)
+                current_line = []
+                current_line_width = 0
 
-        # Emission date
-        c.setFont("Helvetica", 10)
-        emission_date = datetime.now().strftime('%d de %B de %Y')
-        emission_text = f"Emitido em {emission_date}"
-        emission_width = c.stringWidth(emission_text, "Helvetica", 10)
-        c.drawString((page_width - emission_width) / 2, 3 * cm, emission_text)
+            current_line.append((text, font, size, color))
+            current_line_width += text_width
 
-        # Certificate ID (small, at bottom)
-        c.setFont("Helvetica", 8)
-        c.setFillColor(HexColor('#9ca3af'))
-        cert_id = f"Certificado ID: {participant.id} | Evento ID: {event.id}"
-        cert_id_width = c.stringWidth(cert_id, "Helvetica", 8)
-        c.drawString((page_width - cert_id_width) / 2, 1.5 * cm, cert_id)
+        if current_line:
+            lines.append(current_line)
+
+        # Draw the lines
+        line_height = 0.8 * cm
+        for line in lines:
+            # Calculate total width of this line
+            line_width = sum(c.stringWidth(t, f, s) for t, f, s, col in line)
+            x = (page_width - line_width) / 2
+
+            for text, font, size, color in line:
+                c.setFont(font, size)
+                c.setFillColor(color)
+                c.drawString(x, current_y, text)
+                x += c.stringWidth(text, font, size)
+
+            current_y -= line_height
+
+        # Signature (center bottom)
+        sig_y = 4.5 * cm
+        sig_x = page_width / 2
+
+        # Handwritten signature above line
+        self._draw_centered_text(c, "Ana Rita Vieira", sig_y + 0.3 * cm,
+                                "Times-Italic", 22, text_color)
+
+        # Signature line
+        c.setStrokeColor(text_color)
+        c.setLineWidth(1)
+        c.line(sig_x - 3 * cm, sig_y, sig_x + 3 * cm, sig_y)
+
+        # Organization name below line
+        self._draw_centered_text(c, "Mindset & Wellness", sig_y - 0.5 * cm,
+                                "Helvetica", 9, text_color)
 
         # Save PDF
         c.save()
@@ -272,24 +264,24 @@ class CertificateService:
     def _get_default_template_config(self):
         """Get default template configuration"""
         return {
-            'primary_color': '#1e3a8a',
-            'secondary_color': '#3b82f6',
+            'primary_color': '#9DB5A5',  # Verde suave Mindset
+            'secondary_color': '#C8B8D8',  # Lilás suave
             'text_color': '#1f2937',
             'font_title': 'Helvetica-Bold',
             'font_body': 'Helvetica',
             'border_style': 'double',
-            'include_qr': True,
-            'include_logo': False
+            'include_qr': False,
+            'include_logo': True,
+            'logo_path': 'Logos/ana_rita_m&w_logo_trnsp.png'  # Logo PNG transparente
         }
 
-    def batch_generate_certificates(self, event_id, template_id=None, base_url='http://localhost:5000'):
+    def batch_generate_certificates(self, event_id, template_id=None):
         """
         Generate certificates for all participants in an event
 
         Args:
             event_id: Event ID
             template_id: Optional template ID
-            base_url: Base URL for validation
 
         Returns:
             dict with generation statistics
@@ -314,8 +306,7 @@ class CertificateService:
             try:
                 filepath = self.generate_certificate(
                     participant_id=participant.id,
-                    template_id=template_id,
-                    base_url=base_url
+                    template_id=template_id
                 )
 
                 # Update participant record
