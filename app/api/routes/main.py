@@ -13,7 +13,18 @@ bp = Blueprint('main', __name__)
 @bp.route('/')
 def index():
     """Homepage - Beautiful landing page"""
-    return render_template('menu_principal.html')
+    # Get organizations for display
+    organizacoes = Organization.query.filter_by(ativa=True).order_by(Organization.id).all()
+    return render_template('menu_principal.html', organizacoes=organizacoes)
+
+
+@bp.route('/logos/<path:filename>')
+def serve_logo(filename):
+    """Serve logo files"""
+    import os
+    from flask import send_from_directory
+    logos_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'Logos')
+    return send_from_directory(logos_dir, filename)
 
 
 @bp.route('/eventos')

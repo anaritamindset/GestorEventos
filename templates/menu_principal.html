@@ -211,6 +211,26 @@
         font-size: 3em;
     }
 
+    .feature-icon-image {
+        width: 140px;
+        height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 30px;
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 2;
+        position: relative;
+    }
+
+    .org-logo {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
     .feature-card:nth-child(2) .feature-icon {
         background: var(--gradient-lavender);
         box-shadow: 0 15px 35px rgba(200, 184, 216, 0.25);
@@ -219,6 +239,11 @@
     .feature-card:hover .feature-icon {
         transform: scale(1.15) rotate(5deg);
         box-shadow: 0 20px 50px rgba(157, 181, 165, 0.35);
+    }
+
+    .feature-card:hover .feature-icon-image .org-logo {
+        transform: scale(1.1);
+        filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.15));
     }
 
     .feature-title {
@@ -322,31 +347,34 @@
     </p>
 
     <div class="feature-grid">
+        {% for org in organizacoes %}
         <div class="feature-card">
-            <div class="feature-icon">🧘</div>
-            <h2 class="feature-title">Ana Rita - Mindset & Wellness</h2>
+            {% if org.logo_path %}
+            <div class="feature-icon-image">
+                <img src="{{ url_for('main.serve_logo', filename=org.logo_path.replace('Logos/', '')) }}"
+                     alt="{{ org.nome }}"
+                     class="org-logo">
+            </div>
+            {% else %}
+            <div class="feature-icon">{{ org.icone }}</div>
+            {% endif %}
+            <h2 class="feature-title">{{ org.nome }}</h2>
             <p class="feature-description">
-                Gestão de eventos de mindfulness, workshops de bem-estar e sessões de desenvolvimento pessoal.
-                Certificados personalizados e acompanhamento completo dos participantes.
+                {{ org.descricao }}
             </p>
-            <a href="{{ url_for('main.eventos_anarita') }}" class="feature-btn">
+            {% if org.slug == 'ana-rita-mindset-wellness' %}
+            <a href="{{ url_for('main.eventos_anarita') }}" class="feature-btn" style="background: linear-gradient(135deg, {{ org.cor_primaria }} 0%, {{ org.cor_secundaria }} 100%);">
                 <span>Aceder</span>
                 <span>→</span>
             </a>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🌿</div>
-            <h2 class="feature-title">ARdaTerra</h2>
-            <p class="feature-description">
-                Gestão de eventos de aromaterapia, workshops de óleos essenciais e experiências naturais.
-                Ambiente dedicado com certificados e comunicação personalizada.
-            </p>
-            <a href="{{ url_for('main.eventos_ardaterra') }}" class="feature-btn">
+            {% elif org.slug == 'ardaterra' %}
+            <a href="{{ url_for('main.eventos_ardaterra') }}" class="feature-btn" style="background: linear-gradient(135deg, {{ org.cor_primaria }} 0%, {{ org.cor_secundaria }} 100%);">
                 <span>Aceder</span>
                 <span>→</span>
             </a>
+            {% endif %}
         </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
