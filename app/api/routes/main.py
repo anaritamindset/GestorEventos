@@ -17,30 +17,24 @@ def index():
 
 
 @bp.route('/eventos')
-@bp.route('/eventos/<string:org_slug>')
-def eventos(org_slug=None):
-    """List all events, optionally filtered by organization"""
-    query = Event.query.filter(Event.deleted_at.is_(None))
+def eventos():
+    """Default events page - redirects to menu"""
+    # Redirect to main menu to avoid confusion
+    flash('Por favor, escolha uma organização', 'info')
+    return redirect(url_for('main.index'))
 
-    # Se foi fornecido um slug de organização, filtrar por ela
-    if org_slug:
-        from app.models import Organization
-        org = Organization.query.filter_by(slug=org_slug, ativa=True).first_or_404()
-        query = query.filter(Event.organizacao_id == org.id)
-        organizacao = org
-    else:
-        # Por padrão, mostrar eventos da Ana Rita (ID 1)
-        query = query.filter(Event.organizacao_id == 1)
-        organizacao = None
 
-    eventos = query.all()
-    return render_template('eventos.html', eventos=eventos, organizacao=organizacao)
+@bp.route('/eventos_anarita')
+def eventos_anarita():
+    """List Ana Rita - Mindset & Wellness events"""
+    org = Organization.query.filter_by(slug='ana-rita-mindset-wellness', ativa=True).first_or_404()
+    eventos = Event.query.filter(Event.deleted_at.is_(None), Event.organizacao_id == org.id).all()
+    return render_template('eventos.html', eventos=eventos, organizacao=org)
 
 
 @bp.route('/eventos_ardaterra')
 def eventos_ardaterra():
     """List ARdaTerra events"""
-    from app.models import Organization
     org = Organization.query.filter_by(slug='ardaterra', ativa=True).first_or_404()
     eventos = Event.query.filter(Event.deleted_at.is_(None), Event.organizacao_id == org.id).all()
     return render_template('eventos.html', eventos=eventos, organizacao=org)
@@ -126,7 +120,11 @@ def criar_evento():
             db.session.add(evento)
             db.session.commit()
             flash('Evento criado com sucesso!', 'success')
-            return redirect(url_for('main.eventos'))
+            # Redirect to appropriate organization page
+            if organizacao_id == 2:  # ARdaTerra
+                return redirect(url_for('main.eventos_ardaterra'))
+            else:  # Ana Rita (default)
+                return redirect(url_for('main.eventos_anarita'))
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao criar evento: {str(e)}', 'error')
@@ -231,7 +229,7 @@ def criar_evento_from_excel():
                 pass
 
             flash(f'{len(created_events)} eventos criados com sucesso! {total_participants} participantes importados.', 'success')
-            return redirect(url_for('main.eventos'))
+            return redirect(url_for('main.index'))
 
         else:
             # Single event format (legacy)
@@ -336,7 +334,11 @@ def editar_evento(id):
             evento.formadora = request.form.get('formadora', '')
             db.session.commit()
             flash('Evento atualizado com sucesso!', 'success')
-            return redirect(url_for('main.eventos'))
+            # Redirect to appropriate organization page
+            if evento.organizacao_id == 2:  # ARdaTerra
+                return redirect(url_for('main.eventos_ardaterra'))
+            else:  # Ana Rita (default)
+                return redirect(url_for('main.eventos_anarita'))
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao atualizar evento: {str(e)}', 'error')
@@ -350,14 +352,20 @@ def apagar_evento(id):
     try:
         evento = Event.query.get_or_404(id)
         from datetime import datetime
+        organizacao_id = evento.organizacao_id
         evento.deleted_at = datetime.utcnow()
         db.session.commit()
         flash('Evento apagado com sucesso!', 'success')
+
+        # Redirect to appropriate organization page
+        if organizacao_id == 2:  # ARdaTerra
+            return redirect(url_for('main.eventos_ardaterra'))
+        else:  # Ana Rita (default)
+            return redirect(url_for('main.eventos_anarita'))
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao apagar evento: {str(e)}', 'error')
-
-    return redirect(url_for('main.eventos'))
+        return redirect(url_for('main.index'))
 
 
 # Rotas de Gestão Automática
