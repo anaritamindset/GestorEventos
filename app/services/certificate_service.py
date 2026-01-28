@@ -200,13 +200,14 @@ class CertificateService:
                page_height - 2 * inner_margin)
 
         # Title
-        current_y -= 0.3 * cm  # Closer to logo
+        # Move title down by 1 additional line (0.8cm)
+        current_y -= 0.3 * cm + 0.8 * cm
         self._draw_centered_text(c, "CERTIFICADO DE PARTICIPAÇÃO", current_y,
                                 "Helvetica-Bold", 32, primary_color)
 
         # Main certificate text with bold formatting
-        # Move text down by 5 additional lines (~4cm more spacing)
-        current_y -= 2 * cm + 4 * cm
+        # Move text down by 3 lines instead of 5 (2cm less spacing = move up 2 lines)
+        current_y -= 2 * cm + 4 * cm - 1.6 * cm
 
         # Build event details inline - data por extenso
         meses = {
