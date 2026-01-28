@@ -108,13 +108,20 @@ def criar_evento():
             data_fim_str = request.form.get('data_fim')
             data_fim = datetime.strptime(data_fim_str, '%d/%m/%y').date() if data_fim_str else None
 
+            # Get organization ID from form or session
+            organizacao_id = request.form.get('organizacao_id', type=int)
+            if not organizacao_id:
+                # Default to Ana Rita (ID: 1) if not specified
+                organizacao_id = 1
+
             evento = Event(
                 nome=request.form['nome'],
                 data_inicio=data_inicio,
                 data_fim=data_fim,
                 duracao_minutos=int(request.form.get('duracao', 60)),
                 descricao=request.form.get('descricao', ''),
-                formadora=request.form.get('formadora', '')
+                formadora=request.form.get('formadora', ''),
+                organizacao_id=organizacao_id
             )
             db.session.add(evento)
             db.session.commit()
@@ -124,7 +131,9 @@ def criar_evento():
             db.session.rollback()
             flash(f'Erro ao criar evento: {str(e)}', 'error')
 
-    return render_template('criar_evento.html')
+    # Pass organizations to template for selection
+    organizacoes = Organization.query.filter_by(ativa=True).all()
+    return render_template('criar_evento.html', organizacoes=organizacoes)
 
 
 def criar_evento_from_excel():

@@ -24,7 +24,8 @@
         font-weight: bold;
     }
     input[type="text"],
-    input[type="number"] {
+    input[type="number"],
+    select {
         width: 100%;
         padding: 10px;
         margin-bottom: 20px;
@@ -132,6 +133,15 @@
     </div>
 
     <form method="POST" class="criar-evento-form">
+        <div class="form-group">
+            <label for="organizacao_id">Organização</label>
+            <select id="organizacao_id" name="organizacao_id" required>
+                {% for org in organizacoes %}
+                <option value="{{ org.id }}">{{ org.icone }} {{ org.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
         <div class="form-group">
             <label for="nome">Nome do Evento</label>
             <input type="text" id="nome" name="nome" required placeholder="Digite o nome do evento">
