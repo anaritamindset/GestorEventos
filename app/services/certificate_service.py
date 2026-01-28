@@ -159,8 +159,8 @@ class CertificateService:
                     img_width, img_height = img.size
                     aspect_ratio = img_width / img_height
 
-                    # Target size - constrain to max 5.5cm width or height
-                    max_size = 5.5 * cm
+                    # Target size - constrain to max 4.5cm width or height
+                    max_size = 4.5 * cm
 
                     if aspect_ratio > 1:  # Wider than tall
                         logo_width = max_size
