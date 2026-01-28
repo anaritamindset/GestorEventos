@@ -159,11 +159,11 @@ class CertificateService:
                     img_width, img_height = img.size
                     aspect_ratio = img_width / img_height
 
-                    # Fixed height for consistent vertical alignment
-                    # All logos will have same height, width varies by aspect ratio
-                    target_height = 4.5 * cm
-                    logo_height = target_height
-                    logo_width = target_height * aspect_ratio
+                    # Fixed width for consistent sizing
+                    # All logos will have same width, height varies by aspect ratio
+                    target_width = 4.5 * cm
+                    logo_width = target_width
+                    logo_height = target_width / aspect_ratio
 
                     # Center logo horizontally
                     logo_x = (page_width - logo_width) / 2
