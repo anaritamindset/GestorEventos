@@ -1,13 +1,21 @@
-# 🎯 Gestor de Eventos v2.0
+# 🎯 Gestor de Eventos v2.1
 
-Sistema completo de gestão de eventos, participantes, certificados e automação com Google Forms/Sheets.
+Sistema completo de gestão de eventos multi-tenant, participantes, certificados personalizados e automação com Google Forms/Sheets.
 
 <img src="https://img.shields.io/badge/Flask-3.1.0-green" alt="Flask">
 <img src="https://img.shields.io/badge/Python-3.14-blue" alt="Python">
 <img src="https://img.shields.io/badge/SQLAlchemy-2.0-orange" alt="SQLAlchemy">
 <img src="https://img.shields.io/badge/Google_APIs-Enabled-red" alt="Google APIs">
+<img src="https://img.shields.io/badge/Multi--Tenant-✓-purple" alt="Multi-Tenant">
 
 ## ✨ Funcionalidades Principais
+
+### 🏢 Multi-Tenancy (NOVO!)
+- ✅ **Múltiplas organizações** no mesmo sistema
+- ✅ **Branding personalizado** por organização (cores, logos, selos)
+- ✅ **Certificados personalizados** com identidade visual única
+- ✅ **Separação completa de dados** entre organizações
+- ✅ **Homepage moderna** com seleção de organizações
 
 ### 📅 Gestão de Eventos
 - ✅ Criar, editar e eliminar eventos
@@ -30,9 +38,12 @@ Sistema completo de gestão de eventos, participantes, certificados e automaçã
 - ✅ **Associação de formulários existentes** a eventos
 
 ### 📄 Certificados
-- ✅ Geração de certificados PDF
-- ✅ Templates personalizáveis
+- ✅ Geração de certificados PDF personalizados
+- ✅ **Branding por organização** (cores, logos, selos/lacres)
+- ✅ Templates personalizáveis com identidade visual
+- ✅ **Validação online** com QR codes
 - ✅ Envio automático por email
+- ✅ Download individual ou em lote
 
 ### 📊 Importação de Dados
 - ✅ **Importação via Excel** (formato único ou múltiplos eventos)
@@ -75,6 +86,39 @@ python3 run.py
 ```
 
 Aceda a: **http://127.0.0.1:5000**
+
+### 6. Configurar Organizações (Opcional)
+
+Para adicionar ou modificar organizações:
+
+```bash
+# Editar configuração das organizações
+nano seed_organizations.py
+
+# Aplicar alterações à base de dados
+python seed_organizations.py
+```
+
+O script `seed_organizations.py` permite configurar:
+- Nome e subtítulo da organização
+- Cores primária e secundária (branding)
+- Logos (principal e selo/lacre)
+- Configurações de email SMTP
+- Assinaturas para certificados
+
+## 🏢 Organizações Configuradas
+
+O sistema atualmente suporta duas organizações:
+
+### 🧘 Ana Rita - Mindset & Wellness
+- **Foco**: Eventos de mindfulness e desenvolvimento pessoal
+- **Cores**: Verde suave (#9DB5A5) + Lilás suave (#C8B8D8)
+- **Email**: anaritamindset@gmail.com
+
+### 🌿 ARdaTerra
+- **Foco**: Eventos de aromaterapia e óleos essenciais
+- **Cores**: Verde terra (#8B9D7C) + Castanho dourado (#D4A574)
+- **Email**: ardoterra@gmail.com
 
 ## 📁 Estrutura do Projeto
 
@@ -133,10 +177,21 @@ Ficheiros protegidos pelo `.gitignore`:
 
 ## 🎨 Interface
 
-- Interface moderna e responsiva
-- Design limpo e profissional
-- Navegação intuitiva
-- Feedback visual imediato
+### Design Moderno e Elegante
+- ✨ **Paleta de cores wellness** (verde-sálvia, lavanda, pêssego suave)
+- 📱 **100% Responsivo** (desktop, tablet, mobile)
+- 🎯 **Navegação intuitiva** com dropdown menus
+- 🎨 **Gradientes suaves** e sombras elegantes
+- ⚡ **Transições animadas** e feedback visual imediato
+- 📋 **Formulários modernos** com validação em tempo real
+- 🃏 **Cards interativos** com efeitos hover
+
+### Componentes UI
+- **Homepage**: Seleção de organizações com logos e branding
+- **Formulários**: Layout em grid de 2 colunas, radio buttons estilizados
+- **Navegação**: Dropdown elegante com indicadores de página ativa
+- **Tabelas**: Ordenação, pesquisa e paginação integradas
+- **Modais**: Confirmações e avisos com design consistente
 
 ## 🤝 Contribuir
 
