@@ -228,21 +228,23 @@ class CertificateService:
             data_str += f" a {dia_fim} de {mes_fim} de {ano_fim}"
 
         # Create full text with parts
+        # Note: Punctuation is attached to preceding words to prevent orphaned commas
         text_parts = [
             ("Certificamos que ", "Helvetica", 16, text_color),
-            (f"{participant.nome}", "Helvetica-Bold", 16, primary_color),
-            (", participou no evento ", "Helvetica", 16, text_color),
-            (f"{event.nome}", "Helvetica-Bold", 16, primary_color),
-            (f", realizado a {data_str},", "Helvetica", 16, text_color),
-            (f"com a duração de {event.duracao_minutos} minutos", "Helvetica", 16, text_color),
+            (f"{participant.nome},", "Helvetica-Bold", 16, primary_color),
+            (" participou no evento ", "Helvetica", 16, text_color),
+            (f"{event.nome},", "Helvetica-Bold", 16, primary_color),
+            (f" realizado a {data_str},", "Helvetica", 16, text_color),
+            (f" com a duração de {event.duracao_minutos} minutos", "Helvetica", 16, text_color),
         ]
 
         # Add optional formadora
         if event.formadora:
-            text_parts.append((f", ministrado por ", "Helvetica", 16, text_color))
-            text_parts.append((f"{event.formadora}", "Helvetica-Bold", 16, primary_color))
-
-        text_parts.append((".", "Helvetica", 16, text_color))
+            text_parts.append((", ministrado por ", "Helvetica", 16, text_color))
+            text_parts.append((f"{event.formadora}.", "Helvetica-Bold", 16, primary_color))
+        else:
+            # Add period at the end if no formadora
+            text_parts[-1] = (text_parts[-1][0] + ".", text_parts[-1][1], text_parts[-1][2], text_parts[-1][3])
 
         # Calculate total width and wrap if needed
         max_width = page_width - 6 * cm
