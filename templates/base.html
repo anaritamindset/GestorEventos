@@ -59,7 +59,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            padding: 15px 40px;
             background: white;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
@@ -77,6 +77,7 @@
         .nav-menu {
             display: flex;
             gap: 20px;
+            align-items: center;
         }
         .nav-link {
             text-decoration: none;
@@ -85,6 +86,11 @@
             position: relative;
             transition: color 0.3s ease;
         }
+
+        .nav-link:visited {
+            color: var(--text-light);
+        }
+
         .nav-link::after {
             content: '';
             position: absolute;
@@ -95,18 +101,122 @@
             background-color: var(--primary-color);
             transition: width 0.3s ease;
         }
+
         .nav-link:hover {
             color: var(--primary-color);
         }
+
         .nav-link:hover::after {
             width: 100%;
         }
+
         .nav-link.active {
             color: var(--primary-color);
         }
+
         .nav-link.active::after {
             width: 100%;
         }
+
+        /* Dropdown styles */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-dropdown-toggle {
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .nav-dropdown-toggle::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-dropdown-toggle:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-dropdown-toggle:hover::after {
+            width: 100%;
+        }
+
+        .nav-dropdown-toggle.active {
+            color: var(--primary-color);
+        }
+
+        .nav-dropdown-toggle.active::after {
+            width: 100%;
+        }
+
+        .nav-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            min-width: 250px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            padding: 10px 0;
+        }
+
+        .nav-dropdown:hover .nav-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .nav-dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .nav-dropdown-item:hover {
+            background: var(--warm-cream);
+            color: var(--primary-color);
+            padding-left: 25px;
+        }
+
+        .nav-dropdown-item.active {
+            background: var(--warm-cream);
+            color: var(--primary-color);
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-dropdown:hover .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
         .container {
             background-color: white;
             min-height: calc(100vh - 80px);
@@ -240,8 +350,17 @@
         </a>
         <div class="nav-menu">
             <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">Início</a>
-            <a href="{{ url_for('main.eventos') }}" class="nav-link {% if request.endpoint =='main.eventos' %}active{% endif %}">Eventos</a>
-            <a href="{{ url_for('main.gestao_automatica') }}" class="nav-link {% if request.endpoint =='main.gestao_automatica' %}active{% endif %}">Gestão Automática</a>
+
+            <div class="nav-dropdown">
+                <span class="nav-dropdown-toggle {% if request.endpoint in ['main.eventos_anarita', 'main.eventos_ardaterra', 'main.eventos'] %}active{% endif %}">
+                    Eventos
+                    <span class="dropdown-arrow">▼</span>
+                </span>
+                <div class="nav-dropdown-menu">
+                    <a href="{{ url_for('main.eventos_anarita') }}" class="nav-dropdown-item {% if request.endpoint == 'main.eventos_anarita' %}active{% endif %}">Ana Rita - Mindset & Wellness</a>
+                    <a href="{{ url_for('main.eventos_ardaterra') }}" class="nav-dropdown-item {% if request.endpoint == 'main.eventos_ardaterra' %}active{% endif %}">ARdaTerra</a>
+                </div>
+            </div>
         </div>
     </nav>
 

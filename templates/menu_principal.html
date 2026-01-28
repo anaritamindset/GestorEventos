@@ -251,10 +251,23 @@
         font-size: 2em;
         font-weight: 600;
         color: var(--text-dark);
-        margin-bottom: 20px;
+        margin-bottom: 5px;
         letter-spacing: -0.01em;
         z-index: 2;
         position: relative;
+        line-height: 1.2;
+    }
+
+    .feature-subtitle {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.4em;
+        font-weight: 400;
+        color: var(--text-light);
+        margin-bottom: 20px;
+        letter-spacing: 0.02em;
+        z-index: 2;
+        position: relative;
+        opacity: 0.9;
     }
 
     .feature-description {
@@ -336,15 +349,8 @@
 {% block content %}
 <div class="landing-container">
     <div class="landing-header">
-        <div class="landing-logo">🌿</div>
-        <h1 class="landing-title">Gestor Wellness</h1>
-        <p class="landing-subtitle">Óleos Essenciais & Mindfulness</p>
+        <h1 class="landing-title">Gestor de Eventos</h1>
     </div>
-
-    <p class="landing-description">
-        Transforme a gestão dos seus eventos de bem-estar. Uma plataforma elegante e intuitiva
-        para organizar workshops, sessões de aromaterapia e experiências de mindfulness com harmonia e simplicidade.
-    </p>
 
     <div class="feature-grid">
         {% for org in organizacoes %}
@@ -359,6 +365,9 @@
             <div class="feature-icon">{{ org.icone }}</div>
             {% endif %}
             <h2 class="feature-title">{{ org.nome }}</h2>
+            {% if org.subtitulo %}
+            <p class="feature-subtitle">{{ org.subtitulo }}</p>
+            {% endif %}
             <p class="feature-description">
                 {{ org.descricao }}
             </p>

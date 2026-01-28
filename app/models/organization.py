@@ -14,6 +14,7 @@ class Organization(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(200), nullable=False, unique=True)
+    subtitulo = db.Column(db.String(200), nullable=True)  # Subtítulo para cartões
     slug = db.Column(db.String(100), nullable=False, unique=True, index=True)
     descricao = db.Column(db.Text, nullable=True)
 
