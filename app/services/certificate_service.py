@@ -159,17 +159,13 @@ class CertificateService:
                     img_width, img_height = img.size
                     aspect_ratio = img_width / img_height
 
-                    # Target size - constrain to max 4.5cm width or height
-                    max_size = 4.5 * cm
+                    # Fixed height for consistent vertical alignment
+                    # All logos will have same height, width varies by aspect ratio
+                    target_height = 4.5 * cm
+                    logo_height = target_height
+                    logo_width = target_height * aspect_ratio
 
-                    if aspect_ratio > 1:  # Wider than tall
-                        logo_width = max_size
-                        logo_height = max_size / aspect_ratio
-                    else:  # Taller than wide
-                        logo_height = max_size
-                        logo_width = max_size * aspect_ratio
-
-                    # Center logo
+                    # Center logo horizontally
                     logo_x = (page_width - logo_width) / 2
 
                     # Use mask='auto' to preserve transparency in PNG files
