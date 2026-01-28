@@ -75,8 +75,8 @@ def seed_organizations():
                 cor_secundaria='#D4A574',  # Castanho dourado
                 logo_path='Logos/ardaterra_logo.png',
                 icone='🌿',
-                email='contacto@ardaterra.pt',
-                smtp_email='contacto@ardaterra.pt',
+                email='ardoterra@gmail.com',
+                smtp_email='ardoterra@gmail.com',
                 smtp_password='xxxx xxxx xxxx xxxx',  # NOTA: Substituir pela app password real
                 smtp_server='smtp.gmail.com',
                 smtp_port=587,
@@ -91,7 +91,7 @@ def seed_organizations():
             print("   ⚠️  ATENÇÃO: Adicionar app password real da ARdaTerra após configurar na Google")
         else:
             # Update existing organization with SMTP credentials
-            ardaterra.smtp_email = 'contacto@ardaterra.pt'
+            ardaterra.smtp_email = 'ardoterra@gmail.com'
             ardaterra.smtp_password = 'xxxx xxxx xxxx xxxx'  # NOTA: Substituir pela app password real
             ardaterra.smtp_server = 'smtp.gmail.com'
             ardaterra.smtp_port = 587
