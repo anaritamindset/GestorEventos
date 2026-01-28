@@ -123,16 +123,31 @@ class CertificateService:
         page_width, page_height = landscape(A4)
         c = canvas.Canvas(filepath, pagesize=landscape(A4))
 
-        # Extract colors from config
-        primary_color = HexColor(config.get('primary_color', '#9DB5A5'))
-        secondary_color = HexColor(config.get('secondary_color', '#C8B8D8'))
+        # Get organization for colors and logo
+        organizacao = event.organizacao if event.organizacao else None
+
+        # Extract colors from organization or config
+        if organizacao:
+            primary_color = HexColor(organizacao.cor_primaria or config.get('primary_color', '#9DB5A5'))
+            secondary_color = HexColor(organizacao.cor_secundaria or config.get('secondary_color', '#C8B8D8'))
+        else:
+            primary_color = HexColor(config.get('primary_color', '#9DB5A5'))
+            secondary_color = HexColor(config.get('secondary_color', '#C8B8D8'))
+
         text_color = HexColor(config.get('text_color', '#1f2937'))
 
         # Logo first (will be behind borders)
         current_y = page_height - 6 * cm
 
-        if config.get('include_logo') and config.get('logo_path'):
-            logo_path = self._get_absolute_path(config.get('logo_path'))
+        # Use organization logo if available, otherwise use template logo
+        logo_path_to_use = None
+        if organizacao and organizacao.logo_path:
+            logo_path_to_use = organizacao.logo_path
+        elif config.get('logo_path'):
+            logo_path_to_use = config.get('logo_path')
+
+        if config.get('include_logo', True) and logo_path_to_use:
+            logo_path = self._get_absolute_path(logo_path_to_use)
 
             if os.path.exists(logo_path):
                 try:
