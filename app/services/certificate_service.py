@@ -309,9 +309,9 @@ class CertificateService:
                     seal_height = 3 * cm
                     seal_width = seal_height * seal_aspect
 
-                    # Position in bottom left corner with margin
-                    seal_x = 2.5 * cm
-                    seal_y = 2.5 * cm
+                    # Position in bottom left corner with margin (adjusted 1cm up and right)
+                    seal_x = 2.5 * cm + 1 * cm  # 1cm more to the right
+                    seal_y = 2.5 * cm + 1 * cm  # 1cm higher
 
                     c.drawImage(ImageReader(seal_path), seal_x, seal_y,
                                width=seal_width, height=seal_height,
