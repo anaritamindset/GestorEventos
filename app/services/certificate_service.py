@@ -153,8 +153,10 @@ class CertificateService:
                 try:
                     logo_size = 5 * cm
                     logo_x = (page_width - logo_size) / 2
+                    # Use mask='auto' to preserve transparency in PNG files
                     c.drawImage(ImageReader(logo_path), logo_x, current_y,
-                               width=logo_size, height=logo_size)
+                               width=logo_size, height=logo_size,
+                               mask='auto', preserveAspectRatio=True)
                     current_y -= 0.2 * cm  # Small padding below logo
                     logger.info(f"Logo added from {logo_path}")
                 except Exception as e:
