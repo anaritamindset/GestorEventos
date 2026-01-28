@@ -206,8 +206,8 @@ class CertificateService:
                                 "Helvetica-Bold", 32, primary_color)
 
         # Main certificate text with bold formatting
-        # Move text down by 3 lines instead of 5 (2cm less spacing = move up 2 lines)
-        current_y -= 2 * cm + 4 * cm - 1.6 * cm
+        # Reduce spacing: 2cm base + 4cm - 4cm (5 lines up) = 2cm total
+        current_y -= 2 * cm
 
         # Build event details inline - data por extenso
         meses = {
