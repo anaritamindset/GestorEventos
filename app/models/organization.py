@@ -21,6 +21,7 @@ class Organization(db.Model):
     cor_primaria = db.Column(db.String(7), default='#9DB5A5')  # Hex color
     cor_secundaria = db.Column(db.String(7), default='#C8B8D8')  # Hex color
     logo_path = db.Column(db.String(500), nullable=True)
+    seal_logo_path = db.Column(db.String(500), nullable=True)  # Lacre/selo para certificados
     icone = db.Column(db.String(10), default='🌿')  # Emoji icon
 
     # Contact information

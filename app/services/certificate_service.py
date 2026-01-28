@@ -294,6 +294,32 @@ class CertificateService:
         self._draw_centered_text(c, "Mindset & Wellness", sig_y - 0.5 * cm,
                                 "Helvetica", 9, text_color)
 
+        # Add seal/lacre logo in bottom left corner
+        if organizacao and organizacao.seal_logo_path:
+            seal_path = self._get_absolute_path(organizacao.seal_logo_path)
+            if os.path.exists(seal_path):
+                try:
+                    from PIL import Image
+
+                    # Load seal image
+                    seal_img = Image.open(seal_path)
+                    seal_aspect = seal_img.width / seal_img.height
+
+                    # Seal size - 3cm height
+                    seal_height = 3 * cm
+                    seal_width = seal_height * seal_aspect
+
+                    # Position in bottom left corner with margin
+                    seal_x = 2.5 * cm
+                    seal_y = 2.5 * cm
+
+                    c.drawImage(ImageReader(seal_path), seal_x, seal_y,
+                               width=seal_width, height=seal_height,
+                               mask='auto')
+                    logger.info(f"Seal logo added from {seal_path}")
+                except Exception as e:
+                    logger.error(f"Could not add seal logo: {e}")
+
         # Save PDF
         c.save()
 
