@@ -12,6 +12,11 @@ class Event(db.Model):
     __tablename__ = 'events'
 
     id = db.Column(db.Integer, primary_key=True)
+
+    # Organization (multi-tenant support)
+    organizacao_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True, index=True)
+    organizacao = db.relationship('Organization', back_populates='eventos')
+
     nome = db.Column(db.String(200), nullable=False)
     descricao = db.Column(db.Text, nullable=True)
 

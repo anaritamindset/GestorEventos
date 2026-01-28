@@ -17,10 +17,33 @@ def index():
 
 
 @bp.route('/eventos')
-def eventos():
-    """List all events"""
-    eventos = Event.query.filter(Event.deleted_at.is_(None)).all()
-    return render_template('eventos.html', eventos=eventos)
+@bp.route('/eventos/<string:org_slug>')
+def eventos(org_slug=None):
+    """List all events, optionally filtered by organization"""
+    query = Event.query.filter(Event.deleted_at.is_(None))
+
+    # Se foi fornecido um slug de organização, filtrar por ela
+    if org_slug:
+        from app.models import Organization
+        org = Organization.query.filter_by(slug=org_slug, ativa=True).first_or_404()
+        query = query.filter(Event.organizacao_id == org.id)
+        organizacao = org
+    else:
+        # Por padrão, mostrar eventos da Ana Rita (ID 1)
+        query = query.filter(Event.organizacao_id == 1)
+        organizacao = None
+
+    eventos = query.all()
+    return render_template('eventos.html', eventos=eventos, organizacao=organizacao)
+
+
+@bp.route('/eventos_ardaterra')
+def eventos_ardaterra():
+    """List ARdaTerra events"""
+    from app.models import Organization
+    org = Organization.query.filter_by(slug='ardaterra', ativa=True).first_or_404()
+    eventos = Event.query.filter(Event.deleted_at.is_(None), Event.organizacao_id == org.id).all()
+    return render_template('eventos.html', eventos=eventos, organizacao=org)
 
 
 @bp.route('/detalhe_evento/<int:id>')

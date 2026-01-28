@@ -10,7 +10,12 @@ class CertificateTemplate(db.Model):
     __tablename__ = 'certificate_templates'
 
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False, unique=True)
+
+    # Organization (multi-tenant support)
+    organizacao_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True, index=True)
+    organizacao = db.relationship('Organization', back_populates='templates')
+
+    nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text, nullable=True)
 
     # Template configuration (JSON)
