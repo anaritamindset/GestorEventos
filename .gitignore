@@ -22,9 +22,14 @@ instance/
 
 # Environment variables - CREDENCIAIS SENSÍVEIS
 .env
+.env.yaml
 credentials.json
 token.json
 token.pickle
+
+# Google Cloud
+.gcloud/
+service-account-key.json
 
 # IDE
 .vscode/

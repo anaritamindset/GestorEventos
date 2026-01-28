@@ -1,0 +1,87 @@
+# This file specifies files that are *not* uploaded to Google Cloud Platform
+# using gcloud. It follows the same syntax as .gitignore, with the addition of
+# "#!include" directives (which insert the entries of the given .gitignore-style
+# file at that point).
+
+# Python pycache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Flask
+instance/
+.webassets-cache
+.env
+.flaskenv
+
+# Database files (use Cloud SQL in production)
+*.db
+*.sqlite
+*.sqlite3
+gestorev2.db
+
+# Google credentials (don't upload local credentials)
+credentials.json
+token.json
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Certificates (generated at runtime)
+certificados/
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Documentation (optional - remove if you want to upload docs)
+docs/
+*.md
+!README.md
+
+# Development files
+.env.example
+*.bak
+*.tmp
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Python eggs
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
