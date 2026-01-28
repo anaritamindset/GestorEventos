@@ -4,7 +4,7 @@ Adapted from v1 to work with v2 architecture
 """
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
-from app.models import Event, Participant, User
+from app.models import Event, Participant, User, Organization
 from app import db
 
 bp = Blueprint('main', __name__)
