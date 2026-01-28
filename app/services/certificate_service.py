@@ -137,7 +137,8 @@ class CertificateService:
         text_color = HexColor(config.get('text_color', '#1f2937'))
 
         # Logo first (will be behind borders)
-        current_y = page_height - 6 * cm
+        # Move logo down by 2 lines (~1.6cm)
+        current_y = page_height - 6 * cm - 1.6 * cm
 
         # Use organization logo if available, otherwise use template logo
         logo_path_to_use = None
@@ -204,7 +205,8 @@ class CertificateService:
                                 "Helvetica-Bold", 32, primary_color)
 
         # Main certificate text with bold formatting
-        current_y -= 2 * cm
+        # Move text down by 5 additional lines (~4cm more spacing)
+        current_y -= 2 * cm + 4 * cm
 
         # Build event details inline - data por extenso
         meses = {
