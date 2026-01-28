@@ -28,6 +28,12 @@ class Organization(db.Model):
     telefone = db.Column(db.String(20), nullable=True)
     website = db.Column(db.String(200), nullable=True)
 
+    # Email/SMTP configuration for sending certificates
+    smtp_email = db.Column(db.String(120), nullable=True)  # Email account for SMTP
+    smtp_password = db.Column(db.String(200), nullable=True)  # App password (encrypted in production)
+    smtp_server = db.Column(db.String(100), default='smtp.gmail.com')
+    smtp_port = db.Column(db.Integer, default=587)
+
     # Certificate settings
     assinatura_nome = db.Column(db.String(100), nullable=True)  # Nome para assinatura nos certificados
     assinatura_cargo = db.Column(db.String(100), nullable=True)  # Cargo para assinatura

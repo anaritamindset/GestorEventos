@@ -15,17 +15,36 @@ from typing import Optional, List
 class EmailService:
     """Service to send emails with certificates"""
 
-    def __init__(self):
-        """Initialize email service with credentials from environment"""
-        self.smtp_server = "smtp.gmail.com"
-        self.smtp_port = 587
-        self.email_user = os.getenv('EMAIL_USER')
-        self.email_password = os.getenv('EMAIL_PASSWORD')
+    def __init__(self, organization=None):
+        """
+        Initialize email service with credentials from organization or environment
+
+        Args:
+            organization: Organization model instance (optional)
+                         If provided, uses organization's SMTP credentials
+                         If not provided, falls back to environment variables
+        """
+        if organization and organization.smtp_email and organization.smtp_password:
+            # Use organization-specific SMTP credentials
+            self.smtp_server = organization.smtp_server or "smtp.gmail.com"
+            self.smtp_port = organization.smtp_port or 587
+            self.email_user = organization.smtp_email
+            self.email_password = organization.smtp_password
+            self.sender_name = organization.nome
+            self.sender_signature = f"{organization.assinatura_nome}\n{organization.assinatura_cargo}"
+        else:
+            # Fall back to environment variables (for backward compatibility)
+            self.smtp_server = "smtp.gmail.com"
+            self.smtp_port = 587
+            self.email_user = os.getenv('EMAIL_USER')
+            self.email_password = os.getenv('EMAIL_PASSWORD')
+            self.sender_name = "Ana Rita - Mindset & Wellness"
+            self.sender_signature = "Ana Rita\nMindset & Wellness"
 
         if not self.email_user or not self.email_password:
             raise ValueError(
-                "Email credentials not found in environment variables. "
-                "Please set EMAIL_USER and EMAIL_PASSWORD in .env file."
+                "Email credentials not found. Please set organization SMTP credentials "
+                "or EMAIL_USER and EMAIL_PASSWORD in .env file."
             )
 
     def send_certificate(
@@ -50,7 +69,7 @@ class EmailService:
         try:
             # Create message
             msg = MIMEMultipart()
-            msg['From'] = f"Ana Rita - Mindset & Wellness <{self.email_user}>"
+            msg['From'] = f"{self.sender_name} <{self.email_user}>"
             msg['To'] = recipient_email
             msg['Subject'] = f"Certificado de Participação - {event_name}"
 
@@ -63,8 +82,7 @@ Segue em anexo o seu certificado de participação no evento "{event_name}".
 Agradecemos a sua presença e participação!
 
 Atenciosamente,
-Mindset Wellness
-Ana Rita
+{self.sender_signature}
 
 ---
 Este é um email automático. Por favor não responda.

@@ -41,6 +41,10 @@ def seed_organizations():
                 logo_path='Logos/ana_rita_m&w_logo_trnsp.png',
                 icone='🧘',
                 email='anarita@mindsetwellness.com',
+                smtp_email='anaritamindset@gmail.com',
+                smtp_password='mrll wqhc gzor xwfg',
+                smtp_server='smtp.gmail.com',
+                smtp_port=587,
                 assinatura_nome='Ana Rita Vieira',
                 assinatura_cargo='Mindset & Wellness',
                 ativa=True,
@@ -50,7 +54,13 @@ def seed_organizations():
             db.session.add(ana_rita)
             print("   ✅ Organização criada")
         else:
-            print("   ℹ️  Organização já existe")
+            # Update existing organization with SMTP credentials
+            ana_rita.smtp_email = 'anaritamindset@gmail.com'
+            ana_rita.smtp_password = 'mrll wqhc gzor xwfg'
+            ana_rita.smtp_server = 'smtp.gmail.com'
+            ana_rita.smtp_port = 587
+            ana_rita.updated_at = datetime.utcnow()
+            print("   ℹ️  Organização já existe - credenciais SMTP atualizadas")
 
         # Organização 2: ARdaTerra
         print("\n2️⃣  Criando: ARdaTerra")
@@ -66,6 +76,10 @@ def seed_organizations():
                 logo_path='Logos/ardaterra_logo.png',
                 icone='🌿',
                 email='contacto@ardaterra.pt',
+                smtp_email='contacto@ardaterra.pt',
+                smtp_password='xxxx xxxx xxxx xxxx',  # NOTA: Substituir pela app password real
+                smtp_server='smtp.gmail.com',
+                smtp_port=587,
                 assinatura_nome='ARdaTerra',
                 assinatura_cargo='Aromaterapia & Natureza',
                 ativa=True,
@@ -74,8 +88,16 @@ def seed_organizations():
             )
             db.session.add(ardaterra)
             print("   ✅ Organização criada")
+            print("   ⚠️  ATENÇÃO: Adicionar app password real da ARdaTerra após configurar na Google")
         else:
-            print("   ℹ️  Organização já existe")
+            # Update existing organization with SMTP credentials
+            ardaterra.smtp_email = 'contacto@ardaterra.pt'
+            ardaterra.smtp_password = 'xxxx xxxx xxxx xxxx'  # NOTA: Substituir pela app password real
+            ardaterra.smtp_server = 'smtp.gmail.com'
+            ardaterra.smtp_port = 587
+            ardaterra.updated_at = datetime.utcnow()
+            print("   ℹ️  Organização já existe - credenciais SMTP atualizadas")
+            print("   ⚠️  ATENÇÃO: Adicionar app password real da ARdaTerra após configurar na Google")
 
         # Commit
         try:

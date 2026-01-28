@@ -661,7 +661,9 @@ def enviar_certificado(participante_id):
 
         # Send email with certificate
         from app.services.email_service import EmailService
-        email_service = EmailService()
+        # Get event organization
+        organizacao = participante.evento.organizacao
+        email_service = EmailService(organization=organizacao)
 
         success = email_service.send_certificate(
             recipient_email=participante.email,
@@ -747,7 +749,9 @@ def enviar_certificados_todos(evento_id):
 
         # Send emails
         from app.services.email_service import EmailService
-        email_service = EmailService()
+        # Get event organization
+        organizacao = evento.organizacao
+        email_service = EmailService(organization=organizacao)
         result = email_service.send_bulk_certificates(recipients)
 
         # Mark sent certificates
