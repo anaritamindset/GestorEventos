@@ -151,14 +151,32 @@ class CertificateService:
 
             if os.path.exists(logo_path):
                 try:
-                    logo_size = 5 * cm
-                    logo_x = (page_width - logo_size) / 2
+                    from PIL import Image
+
+                    # Load image to get dimensions
+                    img = Image.open(logo_path)
+                    img_width, img_height = img.size
+                    aspect_ratio = img_width / img_height
+
+                    # Target size - constrain to max 4.5cm width or height
+                    max_size = 4.5 * cm
+
+                    if aspect_ratio > 1:  # Wider than tall
+                        logo_width = max_size
+                        logo_height = max_size / aspect_ratio
+                    else:  # Taller than wide
+                        logo_height = max_size
+                        logo_width = max_size * aspect_ratio
+
+                    # Center logo
+                    logo_x = (page_width - logo_width) / 2
+
                     # Use mask='auto' to preserve transparency in PNG files
                     c.drawImage(ImageReader(logo_path), logo_x, current_y,
-                               width=logo_size, height=logo_size,
-                               mask='auto', preserveAspectRatio=True)
+                               width=logo_width, height=logo_height,
+                               mask='auto')
                     current_y -= 0.2 * cm  # Small padding below logo
-                    logger.info(f"Logo added from {logo_path}")
+                    logger.info(f"Logo added from {logo_path} ({logo_width/cm:.1f}x{logo_height/cm:.1f}cm)")
                 except Exception as e:
                     logger.error(f"Could not add logo: {e}")
             else:
