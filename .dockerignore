@@ -7,20 +7,6 @@ __pycache__/
 venv/
 env/
 ENV/
-*.egg-info/
-dist/
-build/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Credentials - NEVER include in Docker image
-.env
-credentials.json
-token.json
-token.pickle
 
 # Git
 .git/
@@ -31,37 +17,23 @@ token.pickle
 .idea/
 *.swp
 *.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Uploads and generated files
-uploads/
+# Local development
+.env
 certificados/
-
-# Logs
-*.log
+*.db
+*.sqlite
+*.sqlite3
 
 # Documentation
-docs/
-README.md
-LICENSE
 *.md
+docs/
 
-# Test files
-test_*.py
-*_test.py
-diagnostico_*.py
-verificar_*.py
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
-# Examples
-exemplos/
-
-# Logos (optional - comment out if you want logos in production)
-Logos/
+# Deployment configs (App Engine specific)
+app.yaml
+.gcloudignore
+deploy.sh

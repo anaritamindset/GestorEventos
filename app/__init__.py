@@ -45,8 +45,17 @@ def create_app(config_name='default'):
     CORS(app)
 
     # Create upload folders
+    # Use /tmp for App Engine (read-only filesystem)
+    if os.environ.get('GAE_ENV', '').startswith('standard'):
+        # Running on App Engine
+        app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
+        certificados_folder = '/tmp/certificados'
+    else:
+        # Running locally
+        certificados_folder = os.path.join(basedir, 'certificados')
+
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    os.makedirs(os.path.join(basedir, 'certificados'), exist_ok=True)
+    os.makedirs(certificados_folder, exist_ok=True)
 
     # Register API blueprints
     from app.api.routes import events, participants, users, certificates, gdrive
