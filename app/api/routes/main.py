@@ -45,7 +45,7 @@ def eventos_anarita():
 
 @bp.route('/eventos_ardaterra')
 def eventos_ardaterra():
-    """List ARdaTerra events"""
+    """List AR da TERRA events"""
     org = Organization.query.filter_by(slug='ardaterra', ativa=True).first_or_404()
     eventos = Event.query.filter(Event.deleted_at.is_(None), Event.organizacao_id == org.id).all()
     return render_template('eventos.html', eventos=eventos, organizacao=org)
@@ -132,7 +132,7 @@ def criar_evento():
             db.session.commit()
             flash('Evento criado com sucesso!', 'success')
             # Redirect to appropriate organization page
-            if organizacao_id == 2:  # ARdaTerra
+            if organizacao_id == 2:  # AR da TERRA
                 return redirect(url_for('main.eventos_ardaterra'))
             else:  # Ana Rita (default)
                 return redirect(url_for('main.eventos_anarita'))
@@ -249,7 +249,7 @@ def criar_evento_from_excel():
 
             flash(f'{len(created_events)} eventos criados com sucesso! {total_participants} participantes importados.', 'success')
             # Redirect to appropriate organization page
-            if organizacao_id == 2:  # ARdaTerra
+            if organizacao_id == 2:  # AR da TERRA
                 return redirect(url_for('main.eventos_ardaterra'))
             else:  # Ana Rita (default)
                 return redirect(url_for('main.eventos_anarita'))
@@ -327,7 +327,7 @@ def criar_evento_from_excel():
 
             flash(f'Evento criado com sucesso! {participants_count} participantes importados.', 'success')
             # Redirect to appropriate organization page
-            if organizacao_id == 2:  # ARdaTerra
+            if organizacao_id == 2:  # AR da TERRA
                 return redirect(url_for('main.eventos_ardaterra'))
             else:  # Ana Rita (default)
                 return redirect(url_for('main.eventos_anarita'))
@@ -368,7 +368,7 @@ def editar_evento(id):
             db.session.commit()
             flash('Evento atualizado com sucesso!', 'success')
             # Redirect to appropriate organization page
-            if evento.organizacao_id == 2:  # ARdaTerra
+            if evento.organizacao_id == 2:  # AR da TERRA
                 return redirect(url_for('main.eventos_ardaterra'))
             else:  # Ana Rita (default)
                 return redirect(url_for('main.eventos_anarita'))
@@ -391,7 +391,7 @@ def apagar_evento(id):
         flash('Evento apagado com sucesso!', 'success')
 
         # Redirect to appropriate organization page
-        if organizacao_id == 2:  # ARdaTerra
+        if organizacao_id == 2:  # AR da TERRA
             return redirect(url_for('main.eventos_ardaterra'))
         else:  # Ana Rita (default)
             return redirect(url_for('main.eventos_anarita'))
