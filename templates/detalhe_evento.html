@@ -144,9 +144,15 @@
     </div>
 
     <div class="evento-actions">
-        <a href="{{ url_for('main.eventos') }}" class="btn btn-secondary">
+        {% if evento.organizacao_id == 2 %}
+        <a href="{{ url_for('main.eventos_ardaterra') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Voltar
         </a>
+        {% else %}
+        <a href="{{ url_for('main.eventos_anarita') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        {% endif %}
         <a href="{{ url_for('main.editar_evento', id=evento.id) }}" class="btn btn-warning">
             <i class="fas fa-edit"></i> Editar
         </a>
