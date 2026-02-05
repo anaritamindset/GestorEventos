@@ -62,7 +62,7 @@ ORGANIZATIONS_CONFIG = [
         'slug': 'ardaterra',
         'data': {
             # Informação básica
-            'nome': 'AR da Terra',
+            'nome': 'AR da TERRA',
             'subtitulo': 'Óleos Essenciais',
             'descricao': 'Eventos de aromaterapia, workshops de óleos essenciais e experiências naturais',
             'icone': '🌿',
@@ -86,7 +86,7 @@ ORGANIZATIONS_CONFIG = [
             'smtp_port': 587,
 
             # Assinatura para certificados
-            'assinatura_nome': 'AR da Terra',
+            'assinatura_nome': 'AR da TERRA',
             'assinatura_cargo': 'Óleos Essenciais'
         }
     }
