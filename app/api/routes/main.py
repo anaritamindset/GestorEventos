@@ -174,6 +174,11 @@ def criar_evento_from_excel():
             events_list = data['events']
             print(f"DEBUG - Multi-event format detected: {len(events_list)} events")
 
+            # Get organization ID from form
+            organizacao_id = request.form.get('organizacao_id', type=int)
+            if not organizacao_id:
+                organizacao_id = 1  # Default to Ana Rita
+
             created_events = []
             total_participants = 0
 
@@ -211,7 +216,8 @@ def criar_evento_from_excel():
                     duracao_minutos=duracao_minutos,
                     descricao=event_data.get('descricao', ''),
                     formadora=event_data.get('formadora', ''),
-                    local=event_data.get('local', '')
+                    local=event_data.get('local', ''),
+                    organizacao_id=organizacao_id
                 )
                 db.session.add(evento)
                 db.session.flush()  # Get evento.id
@@ -240,7 +246,11 @@ def criar_evento_from_excel():
                 pass
 
             flash(f'{len(created_events)} eventos criados com sucesso! {total_participants} participantes importados.', 'success')
-            return redirect(url_for('main.index'))
+            # Redirect to appropriate organization page
+            if organizacao_id == 2:  # ARdaTerra
+                return redirect(url_for('main.eventos_ardaterra'))
+            else:  # Ana Rita (default)
+                return redirect(url_for('main.eventos_anarita'))
 
         else:
             # Single event format (legacy)
