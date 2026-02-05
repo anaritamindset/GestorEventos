@@ -24,7 +24,12 @@ def create_app(config_name='default'):
     app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
     # Configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "gestorev2.db")}'
+    # Use /tmp for SQLite on App Engine (read-only filesystem)
+    if os.environ.get('GAE_ENV', '').startswith('standard'):
+        db_path = '/tmp/gestorev2.db'
+    else:
+        db_path = os.path.join(basedir, 'gestorev2.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(24)
     app.config['JSON_AS_ASCII'] = False  # Support PT-PT characters
