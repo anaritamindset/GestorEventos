@@ -21,8 +21,12 @@ class CertificateService:
     """Service to generate PDF certificates"""
 
     def __init__(self, output_dir='certificados'):
-        self.output_dir = output_dir
-        os.makedirs(output_dir, exist_ok=True)
+        # Use /tmp on App Engine (read-only filesystem)
+        if os.environ.get('GAE_ENV', '').startswith('standard'):
+            self.output_dir = os.path.join('/tmp', output_dir)
+        else:
+            self.output_dir = output_dir
+        os.makedirs(self.output_dir, exist_ok=True)
 
         # Register fonts (you might need to adjust font paths)
         self._register_fonts()
