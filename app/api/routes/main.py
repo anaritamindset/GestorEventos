@@ -259,6 +259,11 @@ def criar_evento_from_excel():
             event_data = data['event']
             participants_data = data['participants']
 
+            # Get organization ID from form
+            organizacao_id = request.form.get('organizacao_id', type=int)
+            if not organizacao_id:
+                organizacao_id = 1  # Default to Ana Rita
+
             print("DEBUG - Single event format")
             print(f"Event data: {event_data}")
             print(f"Participants count: {len(participants_data)}")
@@ -292,7 +297,8 @@ def criar_evento_from_excel():
                 duracao_minutos=duracao_minutos,
                 descricao=event_data.get('descricao', ''),
                 formadora=event_data.get('formadora', ''),
-                local=event_data.get('local', '')
+                local=event_data.get('local', ''),
+                organizacao_id=organizacao_id
             )
             db.session.add(evento)
             db.session.flush()  # Get evento.id
@@ -320,7 +326,11 @@ def criar_evento_from_excel():
                 pass
 
             flash(f'Evento criado com sucesso! {participants_count} participantes importados.', 'success')
-            return redirect(url_for('main.detalhe_evento', id=evento.id))
+            # Redirect to appropriate organization page
+            if organizacao_id == 2:  # ARdaTerra
+                return redirect(url_for('main.eventos_ardaterra'))
+            else:  # Ana Rita (default)
+                return redirect(url_for('main.eventos_anarita'))
 
     except Exception as e:
         db.session.rollback()
