@@ -4,36 +4,58 @@ This file is required by App Engine/Cloud Run to run the Flask application.
 """
 
 import os
+import fcntl
 from app import create_app, db
 from app.models.organization import Organization
 
 # Create the Flask application instance
 app = create_app()
 
-# Initialize database on first run (for Cloud Run with ephemeral filesystem)
-# Use a file lock to prevent race conditions between workers
-import threading
-_init_lock = threading.Lock()
-
 def init_database():
     """Initialize database with tables and seed data."""
-    with _init_lock:
-        # Check if already initialized
-        try:
-            Organization.query.first()
-            return  # Already initialized
-        except Exception:
-            pass
+    # Use file-based lock for multi-process synchronization
+    lock_file = '/tmp/.db_init.lock'
 
-        # Create tables
-        print("Creating database tables...")
-        db.create_all()
+    try:
+        with open(lock_file, 'w') as f:
+            # Acquire exclusive lock
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
 
-        # Import and run seed data
-        print("Seeding organizations...")
-        from seed_organizations import seed_organizations
-        seed_organizations()
-        print("Database initialized successfully!")
+            try:
+                # Check if already initialized
+                org = Organization.query.first()
+                if org:
+                    return  # Already initialized
+            except Exception:
+                pass
+
+            # Create tables (safe - won't fail if tables exist)
+            print("Creating database tables...")
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            existing_tables = inspector.get_table_names()
+
+            if not existing_tables:
+                db.create_all()
+
+            # Check if organizations need to be seeded
+            try:
+                org_count = Organization.query.count()
+                if org_count == 0:
+                    print("Seeding organizations...")
+                    from seed_organizations import seed_organizations
+                    seed_organizations()
+            except Exception:
+                # Table might not exist yet, create all and seed
+                db.create_all()
+                print("Seeding organizations...")
+                from seed_organizations import seed_organizations
+                seed_organizations()
+
+            print("Database initialized successfully!")
+
+    except Exception as e:
+        print(f"Database init warning: {e}")
 
 # Run initialization once
 with app.app_context():
