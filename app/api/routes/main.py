@@ -142,7 +142,9 @@ def criar_evento():
 
     # Pass organizations to template for selection
     organizacoes = Organization.query.filter_by(ativa=True).all()
-    return render_template('criar_evento.html', organizacoes=organizacoes)
+    # Get pre-selected organization from query param
+    selected_org = request.args.get('org', type=int)
+    return render_template('criar_evento.html', organizacoes=organizacoes, selected_org=selected_org)
 
 
 def criar_evento_from_excel():

@@ -256,7 +256,7 @@
             <label for="organizacao_id">Organização</label>
             <select id="organizacao_id" name="organizacao_id" required>
                 {% for org in organizacoes %}
-                <option value="{{ org.id }}">{{ org.icone }} {{ org.nome }}{% if org.subtitulo %} - {{ org.subtitulo }}{% endif %}</option>
+                <option value="{{ org.id }}" {% if selected_org == org.id %}selected{% endif %}>{{ org.icone }} {{ org.nome }}{% if org.subtitulo %} - {{ org.subtitulo }}{% endif %}</option>
                 {% endfor %}
             </select>
         </div>

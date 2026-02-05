@@ -45,7 +45,7 @@
 <div class="container">
     <h1><strong>Eventos</strong></h1>
 
-    <a href="{{ url_for('main.criar_evento') }}" class="btn btn-primary">
+    <a href="{{ url_for('main.criar_evento', org=organizacao.id) }}" class="btn btn-primary">
         <i class="fas fa-plus-circle"></i> Criar Novo Evento
     </a>
 
