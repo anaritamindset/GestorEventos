@@ -217,7 +217,7 @@ def criar_evento_from_excel():
                     data_fim=data_fim,
                     duracao_minutos=duracao_minutos,
                     descricao=event_data.get('descricao', ''),
-                    formadora=event_data.get('formadora', ''),
+                    formadora=event_data.get('formadora', '') or 'Ana Rita Vieira',
                     local=event_data.get('local', ''),
                     organizacao_id=organizacao_id
                 )
@@ -296,7 +296,7 @@ def criar_evento_from_excel():
                 data_fim=data_fim,
                 duracao_minutos=duracao_minutos,
                 descricao=event_data.get('descricao', ''),
-                formadora=event_data.get('formadora', ''),
+                formadora=event_data.get('formadora', '') or 'Ana Rita Vieira',
                 local=event_data.get('local', ''),
                 organizacao_id=organizacao_id
             )
