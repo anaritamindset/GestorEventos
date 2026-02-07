@@ -216,31 +216,49 @@ class CertificateService:
             9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
         }
 
-        dia = event.data_inicio.day
-        mes = meses[event.data_inicio.month]
-        ano = event.data_inicio.year
-        data_str = f"{dia} de {mes} de {ano}"
+        # Handle events without date
+        if not event.data_inicio:
+            data_str = ""
+            realizado_prefix = ""
+        else:
+            dia = event.data_inicio.day
+            mes = meses[event.data_inicio.month]
+            ano = event.data_inicio.year
 
-        if event.data_fim and event.data_fim != event.data_inicio:
-            dia_fim = event.data_fim.day
-            mes_fim = meses[event.data_fim.month]
-            ano_fim = event.data_fim.year
-            data_str += f" a {dia_fim} de {mes_fim} de {ano_fim}"
+            # Build date string with proper "de ... a ..." format
+            if event.data_fim and event.data_fim != event.data_inicio:
+                dia_fim = event.data_fim.day
+                mes_fim = meses[event.data_fim.month]
+                ano_fim = event.data_fim.year
+                # Use non-breaking spaces (\u00A0) to prevent line breaks at wrong places
+                data_str = f"de\u00A0{dia} de {mes} de {ano} a\u00A0{dia_fim} de {mes_fim} de {ano_fim}"
+                realizado_prefix = " realizado "
+            else:
+                data_str = f"{dia} de {mes} de {ano}"
+                realizado_prefix = " realizado a\u00A0"
 
         # Create full text with parts
-        # Note: Punctuation is attached to preceding words to prevent orphaned commas
+        # Note: Commas are attached to preceding words without space to prevent orphaned punctuation
+        # Non-breaking spaces (\u00A0) are used before key words to prevent awkward line breaks
         text_parts = [
-            ("Certificamos que ", "Helvetica", 16, text_color),
+            ("Certificamos que\u00A0", "Helvetica", 16, text_color),
             (f"{participant.nome},", "Helvetica-Bold", 16, primary_color),
-            (" participou no evento ", "Helvetica", 16, text_color),
-            (f"{event.nome},", "Helvetica-Bold", 16, primary_color),
-            (f" realizado a {data_str},", "Helvetica", 16, text_color),
-            (f" com a duração de {event.duracao_minutos} minutos", "Helvetica", 16, text_color),
+            (" participou no\u00A0evento\u00A0", "Helvetica", 16, text_color),
+            (f"{event.nome},", "Helvetica-Bold", 16, primary_color),  # Comma attached to event name
         ]
+
+        # Add date if available
+        if data_str:
+            text_parts.append((f"{realizado_prefix}{data_str},", "Helvetica", 16, text_color))  # Comma at end
+
+        # Add duration (comma at start of this part to connect to previous)
+        text_parts.append((" com a\u00A0duração de\u00A0{}\u00A0minutos".format(event.duracao_minutos), "Helvetica", 16, text_color))
 
         # Add optional formadora
         if event.formadora:
-            text_parts.append((", ministrado por ", "Helvetica", 16, text_color))
+            # Attach comma to "minutos" and use non-breaking space before "ministrado"
+            text_parts[-1] = (text_parts[-1][0] + ",", text_parts[-1][1], text_parts[-1][2], text_parts[-1][3])
+            text_parts.append((" ministrado\u00A0por\u00A0", "Helvetica", 16, text_color))
             text_parts.append((f"{event.formadora}.", "Helvetica-Bold", 16, primary_color))
         else:
             # Add period at the end if no formadora
@@ -380,10 +398,18 @@ class CertificateService:
                 participant.certificado_path = filepath
 
                 from app import db
+                from datetime import datetime
+                participant.updated_at = datetime.utcnow()
+
+                # Explicitly mark as modified and commit
+                db.session.add(participant)
                 db.session.commit()
 
+                # Refresh to ensure we have latest data
+                db.session.refresh(participant)
+
                 stats['generated'] += 1
-                logger.info(f"Generated certificate for {participant.nome}")
+                logger.info(f"✓ Certificate generated for {participant.nome} (ID: {participant.id}) - certificado_gerado={participant.certificado_gerado}")
 
             except Exception as e:
                 stats['errors'] += 1

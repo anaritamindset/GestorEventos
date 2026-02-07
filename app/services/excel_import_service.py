@@ -35,9 +35,14 @@ class ExcelImportService:
         3. Single sheet: Event info at top, participants below
         """
         try:
+            print(f"DEBUG - Attempting to read Excel file: {file_path}")
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Ficheiro não encontrado: {file_path}")
+
             # Read all sheets
             excel_file = pd.ExcelFile(file_path)
             sheets = excel_file.sheet_names
+            print(f"DEBUG - Found {len(sheets)} sheet(s): {sheets}")
 
             # Check if this is a multi-event file (each sheet is one complete event)
             # or the old format (separate sheets for info and participants)
@@ -120,12 +125,39 @@ class ExcelImportService:
 
     def _parse_single_sheet_format(self, excel_file: pd.ExcelFile) -> dict:
         """Parse Excel with event info at top and participants below"""
-        df = pd.read_excel(excel_file, sheet_name=0)
+        df = pd.read_excel(excel_file, sheet_name=0, header=None)
 
         # Try to find where participant list starts
         participant_start_row = self._find_participant_section(df)
 
-        if participant_start_row is not None:
+        # Check if this is a hybrid format (event data in columns 2-3, participants in 0-1)
+        # This happens when participant_start_row is 0 or very early
+        if participant_start_row is not None and participant_start_row <= 1:
+            # Check if there's event data in columns 2-3 of first few rows
+            if len(df.columns) >= 4:
+                # Look at first 3 rows for event data in columns 2-3
+                event_df_extended = df.iloc[:min(3, len(df))]
+                has_event_data_in_right_cols = False
+
+                for _, row in event_df_extended.iterrows():
+                    key2 = str(row.iloc[2]).strip().lower() if pd.notna(row.iloc[2]) else ''
+                    keywords = ['nome', 'data', 'duração', 'duracao', 'local', 'formador']
+                    if any(keyword in key2 for keyword in keywords):
+                        has_event_data_in_right_cols = True
+                        break
+
+                if has_event_data_in_right_cols:
+                    # Hybrid format: extract event from columns 2-3, participants from columns 0-1
+                    event_df = df.iloc[:min(5, len(df))]  # Take first 5 rows for event data extraction
+                    participants_df = df.iloc[participant_start_row:]
+                else:
+                    # Normal format
+                    event_df = df.iloc[:participant_start_row] if participant_start_row > 0 else pd.DataFrame()
+                    participants_df = df.iloc[participant_start_row:]
+            else:
+                event_df = df.iloc[:participant_start_row] if participant_start_row > 0 else pd.DataFrame()
+                participants_df = df.iloc[participant_start_row:]
+        elif participant_start_row is not None:
             # Event data is above participant section
             event_df = df.iloc[:participant_start_row]
             # Participant data starts after
@@ -310,58 +342,90 @@ class ExcelImportService:
         return participants
 
     def _parse_date(self, value) -> datetime:
-        """Parse date from various formats"""
-        if pd.isna(value):
+        """
+        Parse date from various formats.
+        Returns None if date cannot be parsed (never raises exception).
+        """
+        try:
+            if pd.isna(value):
+                return None
+
+            if isinstance(value, datetime):
+                return value
+
+            value_str = str(value).strip()
+
+            if not value_str or value_str.lower() in ['nan', 'none', '']:
+                return None
+
+            # Try Portuguese format first: "29 de dezembro de 2025"
+            portuguese_months = {
+                'janeiro': 1, 'fevereiro': 2, 'março': 3, 'abril': 4,
+                'maio': 5, 'junho': 6, 'julho': 7, 'agosto': 8,
+                'setembro': 9, 'outubro': 10, 'novembro': 11, 'dezembro': 12
+            }
+
+            # Check if it's Portuguese format
+            if ' de ' in value_str.lower():
+                try:
+                    # Handle format: "12, 14, 19 e 21 de janeiro" or "12, 14, 19 e 21 de janeiro de 2026"
+                    # Extract first day and month, add year if missing
+                    parts = value_str.lower().split(' de ')
+
+                    if len(parts) >= 2:
+                        # Get first day from list (e.g., "12, 14, 19 e 21" -> "12")
+                        day_part = parts[0].strip()
+                        # If there are commas or 'e', extract first number
+                        if ',' in day_part or ' e ' in day_part:
+                            day = int(day_part.split(',')[0].strip())
+                        else:
+                            day = int(day_part)
+
+                        month_name = parts[1].strip()
+
+                        # Check if year is provided
+                        if len(parts) == 3:
+                            year = int(parts[2].strip())
+                        else:
+                            # No year provided, use current year
+                            # (don't auto-advance to next year as this causes confusion)
+                            from datetime import datetime as dt
+                            year = dt.now().year
+
+                        if month_name in portuguese_months:
+                            month = portuguese_months[month_name]
+                            return datetime(year, month, day)
+                except Exception as e:
+                    print(f"DEBUG - Error parsing Portuguese date '{value_str}': {e}")
+                    pass
+
+            # Try common date formats (try 2-digit year first, then 4-digit)
+            date_formats = [
+                '%d/%m/%y',      # DD/MM/YY (e.g., 15/01/26)
+                '%d-%m-%y',      # DD-MM-YY
+                '%d/%m/%Y',      # DD/MM/YYYY
+                '%d-%m-%Y',      # DD-MM-YYYY
+                '%Y-%m-%d',      # YYYY-MM-DD
+                '%d/%m/%Y %H:%M',
+                '%d-%m-%Y %H:%M',
+                '%d/%m/%y %H:%M',
+                '%d-%m-%y %H:%M'
+            ]
+
+            for fmt in date_formats:
+                try:
+                    return datetime.strptime(value_str, fmt)
+                except ValueError:
+                    continue
+
+            # If all fail, return None
+            print(f"DEBUG - Could not parse date: '{value_str}' - ignoring")
             return None
 
-        if isinstance(value, datetime):
-            return value
-
-        value_str = str(value).strip()
-
-        # Try Portuguese format first: "29 de dezembro de 2025"
-        portuguese_months = {
-            'janeiro': 1, 'fevereiro': 2, 'março': 3, 'abril': 4,
-            'maio': 5, 'junho': 6, 'julho': 7, 'agosto': 8,
-            'setembro': 9, 'outubro': 10, 'novembro': 11, 'dezembro': 12
-        }
-
-        # Check if it's Portuguese format
-        if ' de ' in value_str.lower():
-            try:
-                parts = value_str.lower().split(' de ')
-                if len(parts) == 3:
-                    day = int(parts[0].strip())
-                    month_name = parts[1].strip()
-                    year = int(parts[2].strip())
-
-                    if month_name in portuguese_months:
-                        month = portuguese_months[month_name]
-                        return datetime(year, month, day)
-            except:
-                pass
-
-        # Try common date formats (try 2-digit year first, then 4-digit)
-        date_formats = [
-            '%d/%m/%y',      # DD/MM/YY (e.g., 15/01/26)
-            '%d-%m-%y',      # DD-MM-YY
-            '%d/%m/%Y',      # DD/MM/YYYY
-            '%d-%m-%Y',      # DD-MM-YYYY
-            '%Y-%m-%d',      # YYYY-MM-DD
-            '%d/%m/%Y %H:%M',
-            '%d-%m-%Y %H:%M',
-            '%d/%m/%y %H:%M',
-            '%d-%m-%y %H:%M'
-        ]
-
-        for fmt in date_formats:
-            try:
-                return datetime.strptime(value_str, fmt)
-            except ValueError:
-                continue
-
-        # If all fail, return None
-        return None
+        except Exception as e:
+            # Catch any unexpected errors and return None
+            print(f"DEBUG - Unexpected error parsing date '{value}': {e}")
+            return None
 
     def _parse_duration(self, value) -> int:
         """Parse duration in minutes"""
@@ -383,6 +447,54 @@ class ExcelImportService:
             return int(float(numeric)) if numeric else 60
         except:
             return 60
+
+    def extract_participants_only(self, file_path: str) -> list:
+        """
+        Extract only participants from Excel file, ignoring event data.
+        Useful for importing participants to an existing event.
+
+        Returns:
+            list: List of participant dictionaries with fields: nome, email, telefone, empresa, observacoes
+        """
+        try:
+            print(f"DEBUG - Extracting participants from: {file_path}")
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Ficheiro não encontrado: {file_path}")
+
+            # Read all sheets to find participants
+            excel_file = pd.ExcelFile(file_path)
+            all_participants = []
+
+            # Try each sheet
+            for sheet_name in excel_file.sheet_names:
+                print(f"DEBUG - Checking sheet: {sheet_name}")
+                df = pd.read_excel(excel_file, sheet_name=sheet_name, header=None)
+
+                # Find participant section
+                participant_start_row = self._find_participant_section(df)
+
+                if participant_start_row is not None:
+                    print(f"DEBUG - Found participants starting at row {participant_start_row}")
+                    participants_df = df.iloc[participant_start_row:]
+                    participants = self._extract_participants_data(participants_df)
+                    all_participants.extend(participants)
+                    print(f"DEBUG - Extracted {len(participants)} participants from sheet {sheet_name}")
+                else:
+                    # Try to treat entire sheet as participant data
+                    print(f"DEBUG - No participant section found, trying entire sheet")
+                    participants = self._extract_participants_data(df)
+                    if participants:
+                        all_participants.extend(participants)
+                        print(f"DEBUG - Extracted {len(participants)} participants from entire sheet")
+
+            print(f"DEBUG - Total participants extracted: {len(all_participants)}")
+            return all_participants
+
+        except Exception as e:
+            print(f"ERROR - Failed to extract participants: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            raise Exception(f"Erro ao extrair participantes: {str(e)}")
 
     def save_uploaded_file(self, file: FileStorage, upload_folder: str) -> str:
         """Save uploaded file temporarily"""

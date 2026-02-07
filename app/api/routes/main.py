@@ -54,6 +54,9 @@ def eventos_ardaterra():
 @bp.route('/detalhe_evento/<int:id>')
 def detalhe_evento(id):
     """Event details with participants"""
+    # Clear any cached data to ensure fresh query
+    db.session.expire_all()
+
     evento = Event.query.get_or_404(id)
     participantes = Participant.query.filter_by(evento_id=id).filter(
         Participant.deleted_at.is_(None)
@@ -100,7 +103,12 @@ def criar_evento():
     if request.method == 'POST':
         try:
             # Check if Excel file was uploaded
-            if 'excel_file' in request.files and request.files['excel_file'].filename:
+            excel_file = request.files.get('excel_file')
+            print(f"DEBUG - Excel file in request: {excel_file is not None}")
+            if excel_file:
+                print(f"DEBUG - Excel filename: {excel_file.filename}")
+
+            if excel_file and excel_file.filename:
                 return criar_evento_from_excel()
 
             # Manual form submission
@@ -157,18 +165,31 @@ def criar_evento_from_excel():
         excel_service = ExcelImportService()
         excel_file = request.files['excel_file']
 
+        print(f"DEBUG - Processing Excel file: {excel_file.filename}")
+
         # Validate file
         is_valid, message = excel_service.validate_file(excel_file)
+        print(f"DEBUG - File validation: {is_valid} - {message}")
         if not is_valid:
             flash(message, 'error')
             return redirect(url_for('main.criar_evento'))
 
         # Save file temporarily
         upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        print(f"DEBUG - Upload folder: {upload_folder}")
+
         filepath = excel_service.save_uploaded_file(excel_file, upload_folder)
+        print(f"DEBUG - File saved to: {filepath}")
+
+        # Check if file exists after saving
+        if not os.path.exists(filepath):
+            flash(f'Erro: ficheiro não foi guardado corretamente em {filepath}', 'error')
+            return redirect(url_for('main.criar_evento'))
 
         # Parse Excel
+        print(f"DEBUG - Starting to parse Excel file...")
         data = excel_service.parse_excel_file(filepath)
+        print(f"DEBUG - Excel parsed successfully")
 
         # Check if multi-event format or single event
         if 'events' in data:
@@ -194,14 +215,14 @@ def criar_evento_from_excel():
                     flash('⚠️ Nome do evento é obrigatório. Evento ignorado.', 'warning')
                     continue
 
-                # Convert dates
+                # Convert dates (optional - if not found, use None)
                 data_inicio = event_data.get('data') or event_data.get('data_inicio')
                 if data_inicio and hasattr(data_inicio, 'date'):
                     data_inicio = data_inicio.date()
 
+                # Data is now optional - if not found, event will be created without date
                 if not data_inicio:
-                    flash(f'⚠️ Data de início é obrigatória para o evento "{nome}". Evento ignorado.', 'warning')
-                    continue
+                    print(f"DEBUG - No date found for event '{nome}', proceeding without date")
 
                 data_fim = event_data.get('data_fim')
                 if data_fim and hasattr(data_fim, 'date'):
@@ -274,14 +295,14 @@ def criar_evento_from_excel():
                 flash('⚠️ Nome do evento é obrigatório', 'error')
                 return redirect(url_for('main.criar_evento'))
 
-            # Convert dates
+            # Convert dates (optional - if not found, use None)
             data_inicio = event_data.get('data') or event_data.get('data_inicio')
             if data_inicio and hasattr(data_inicio, 'date'):
                 data_inicio = data_inicio.date()
 
+            # Data is now optional
             if not data_inicio:
-                flash('⚠️ Data de início é obrigatória', 'error')
-                return redirect(url_for('main.criar_evento'))
+                print(f"DEBUG - No date found for event '{nome}', proceeding without date")
 
             data_fim = event_data.get('data_fim')
             if data_fim and hasattr(data_fim, 'date'):
@@ -332,11 +353,30 @@ def criar_evento_from_excel():
             else:  # Ana Rita (default)
                 return redirect(url_for('main.eventos_anarita'))
 
+    except FileNotFoundError as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        flash(f'Ficheiro não encontrado: {str(e)}', 'error')
+        flash('Por favor, tente novamente carregar o ficheiro', 'info')
+        return redirect(url_for('main.criar_evento'))
     except Exception as e:
         db.session.rollback()
         import traceback
+        error_type = type(e).__name__
+        error_msg = str(e)
         traceback.print_exc()  # Print full error to console
-        flash(f'Erro ao importar Excel: {str(e)}', 'error')
+
+        # Provide more helpful error messages
+        if 'permission' in error_msg.lower() or 'denied' in error_msg.lower():
+            flash(f'Erro de permissão ao processar ficheiro: {error_msg}', 'error')
+            flash('Verifique se o ficheiro não está aberto noutro programa', 'warning')
+        elif 'corrupt' in error_msg.lower() or 'damaged' in error_msg.lower():
+            flash(f'O ficheiro Excel parece estar corrompido: {error_msg}', 'error')
+            flash('Tente guardar uma nova cópia do ficheiro', 'warning')
+        else:
+            flash(f'Erro ao importar Excel ({error_type}): {error_msg}', 'error')
+
         return redirect(url_for('main.criar_evento'))
 
 
@@ -677,18 +717,33 @@ def link_existing_form(evento_id, form_id):
 def gerar_certificado(participante_id):
     """Generate certificate for single participant"""
     from app.services.certificate_service import CertificateService
+    from datetime import datetime
 
     try:
+        print(f"DEBUG - Generating certificate for participant {participante_id}")
         participante = Participant.query.get_or_404(participante_id)
+        print(f"DEBUG - Participant found: {participante.nome}, Event ID: {participante.evento_id}")
 
         # Generate certificate
         cert_service = CertificateService()
         cert_path = cert_service.generate_certificate(participante_id)
+        print(f"DEBUG - Certificate generated: {cert_path}")
+
+        # Update participant record
+        participante.certificado_gerado = True
+        participante.certificado_path = cert_path
+        participante.updated_at = datetime.utcnow()
+        db.session.add(participante)
+        db.session.commit()
+        db.session.refresh(participante)
+
+        print(f"DEBUG - Participant updated: certificado_gerado={participante.certificado_gerado}")
 
         flash(f'✓ Certificado gerado para {participante.nome}!', 'success')
         return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
 
     except Exception as e:
+        print(f"ERROR - Failed to generate certificate: {str(e)}")
         flash(f'Erro ao gerar certificado: {str(e)}', 'error')
         import traceback
         traceback.print_exc()
@@ -772,8 +827,13 @@ def gerar_certificados_todos(evento_id):
 @bp.route('/certificado/enviar_todos/<int:evento_id>', methods=['POST'])
 def enviar_certificados_todos(evento_id):
     """Send certificates to all event participants"""
+    import sys
     try:
+        print(f"DEBUG - Sending all certificates for event {evento_id}", flush=True)
+        sys.stdout.flush()
+
         evento = Event.query.get_or_404(evento_id)
+        print(f"DEBUG - Event found: {evento.nome}", flush=True)
 
         # Get participants with generated certificates
         participantes = Participant.query.filter_by(
@@ -782,7 +842,12 @@ def enviar_certificados_todos(evento_id):
             certificado_enviado=False
         ).filter(Participant.deleted_at.is_(None)).all()
 
+        print(f"DEBUG - Found {len(participantes)} participants with certificates to send", flush=True)
+        sys.stdout.flush()
+
         if not participantes:
+            print(f"DEBUG - No certificates to send - REDIRECTING", flush=True)
+            sys.stdout.flush()
             flash('Nenhum certificado para enviar', 'warning')
             return redirect(url_for('main.detalhe_evento', id=evento_id))
 
@@ -797,12 +862,24 @@ def enviar_certificados_todos(evento_id):
                     'certificate_path': p.certificado_path
                 })
 
+        print(f"DEBUG - Prepared {len(recipients)} recipients", flush=True)
+        sys.stdout.flush()
+
         # Send emails
         from app.services.email_service import EmailService
         # Get event organization
         organizacao = evento.organizacao
+        print(f"DEBUG - Using organization: {organizacao.nome if organizacao else 'None'}", flush=True)
+        sys.stdout.flush()
+
         email_service = EmailService(organization=organizacao)
+        print(f"DEBUG - Calling send_bulk_certificates...", flush=True)
+        sys.stdout.flush()
+
         result = email_service.send_bulk_certificates(recipients)
+
+        print(f"DEBUG - Email result: {result}", flush=True)
+        sys.stdout.flush()
 
         # Mark sent certificates
         from datetime import datetime
@@ -812,6 +889,8 @@ def enviar_certificados_todos(evento_id):
                 participante.data_envio_certificado = datetime.utcnow()
 
         db.session.commit()
+        print(f"DEBUG - Database updated", flush=True)
+        sys.stdout.flush()
 
         if result['failed'] > 0:
             flash(f'⚠️ {result["sent"]} enviados, {result["failed"]} falharam', 'warning')
@@ -831,29 +910,63 @@ def enviar_certificados_todos(evento_id):
 @bp.route('/certificado/download/<int:participante_id>', methods=['GET'])
 def download_certificado(participante_id):
     """Download generated certificate PDF"""
+    import os
+    import sys
+    from flask import current_app, send_file
+
     try:
+        # Force stdout flush
+        print(f"DEBUG - Download request for participant {participante_id}", flush=True)
+        sys.stdout.flush()
+
         participante = Participant.query.get_or_404(participante_id)
 
+        print(f"DEBUG - Participant found: {participante.nome}", flush=True)
+        print(f"DEBUG - certificado_gerado: {participante.certificado_gerado}", flush=True)
+        print(f"DEBUG - certificado_path: {participante.certificado_path}", flush=True)
+        sys.stdout.flush()
+
         if not participante.certificado_gerado or not participante.certificado_path:
+            print(f"DEBUG - Certificate not generated or path missing - REDIRECTING", flush=True)
+            sys.stdout.flush()
             flash('Certificado não encontrado ou ainda não foi gerado', 'error')
             return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
 
-        # Check if file exists
-        import os
-        if not os.path.exists(participante.certificado_path):
-            flash('Arquivo de certificado não encontrado', 'error')
+        # If path is relative, make it absolute
+        cert_path = participante.certificado_path
+        if not os.path.isabs(cert_path):
+            # Get project root (4 levels up from app/api/routes/main.py)
+            basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+            cert_path = os.path.join(basedir, cert_path)
+
+        print(f"DEBUG - Certificate path: {cert_path}", flush=True)
+        print(f"DEBUG - File exists: {os.path.exists(cert_path)}", flush=True)
+        sys.stdout.flush()
+
+        if not os.path.exists(cert_path):
+            print(f"DEBUG - File NOT FOUND - REDIRECTING", flush=True)
+            sys.stdout.flush()
+            flash(f'Arquivo de certificado não encontrado: {cert_path}', 'error')
             return redirect(url_for('main.detalhe_evento', id=participante.evento_id))
 
         # Send file for download
-        from flask import send_file
-        return send_file(
-            participante.certificado_path,
+        print(f"DEBUG - About to send file: {cert_path}", flush=True)
+        sys.stdout.flush()
+
+        result = send_file(
+            cert_path,
             as_attachment=True,
             download_name=f'Certificado_{participante.nome.replace(" ", "_")}.pdf',
             mimetype='application/pdf'
         )
 
+        print(f"DEBUG - File sent successfully!", flush=True)
+        sys.stdout.flush()
+        return result
+
     except Exception as e:
+        print(f"ERROR - Download failed: {str(e)}", flush=True)
+        sys.stdout.flush()
         flash(f'Erro ao fazer download do certificado: {str(e)}', 'error')
         import traceback
         traceback.print_exc()
@@ -876,6 +989,128 @@ def remover_participante(evento_id, participante_id):
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao remover participante: {str(e)}', 'error')
+        return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+
+@bp.route('/importar_participantes_excel/<int:evento_id>', methods=['POST'])
+def importar_participantes_excel(evento_id):
+    """Import participants from Excel file to existing event"""
+    from app.services.excel_import_service import ExcelImportService
+    import os
+    from flask import current_app
+
+    try:
+        evento = Event.query.get_or_404(evento_id)
+        excel_service = ExcelImportService()
+        excel_file = request.files.get('excel_file')
+
+        if not excel_file or not excel_file.filename:
+            flash('Nenhum ficheiro foi enviado', 'error')
+            return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+        print(f"DEBUG - Importing participants from Excel: {excel_file.filename}")
+
+        # Validate file
+        is_valid, message = excel_service.validate_file(excel_file)
+        if not is_valid:
+            flash(message, 'error')
+            return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+        # Save file temporarily
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        filepath = excel_service.save_uploaded_file(excel_file, upload_folder)
+
+        # Parse Excel - extract only participants
+        participants_data = excel_service.extract_participants_only(filepath)
+
+        print(f"DEBUG - Found {len(participants_data)} participants in Excel")
+
+        # Filter participants with email
+        participants_with_email = [p for p in participants_data if p.get('email', '').strip()]
+        participants_without_email = len(participants_data) - len(participants_with_email)
+
+        if participants_without_email > 0:
+            flash(f'⚠️ {participants_without_email} participantes sem email foram ignorados', 'warning')
+
+        if not participants_with_email:
+            flash('Nenhum participante com email encontrado no ficheiro', 'error')
+            try:
+                os.remove(filepath)
+            except:
+                pass
+            return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+        # Import participants
+        added = 0
+        updated = 0
+        skipped = 0
+
+        for participant_data in participants_with_email:
+            email = participant_data.get('email', '').strip()
+            nome = participant_data.get('nome', '').strip()
+
+            if not email:
+                continue
+
+            # Check if participant already exists
+            existing = Participant.query.filter_by(
+                evento_id=evento_id,
+                email=email
+            ).first()
+
+            if existing:
+                if existing.deleted_at:
+                    # Reactivate soft-deleted participant
+                    from datetime import datetime
+                    existing.nome = nome
+                    existing.telefone = participant_data.get('telefone', '')
+                    existing.empresa = participant_data.get('empresa', '')
+                    existing.observacoes = participant_data.get('observacoes', '')
+                    existing.deleted_at = None
+                    existing.updated_at = datetime.utcnow()
+                    updated += 1
+                else:
+                    # Skip - already exists and active
+                    skipped += 1
+                    continue
+            else:
+                # Create new participant
+                participante = Participant(
+                    evento_id=evento_id,
+                    nome=nome,
+                    email=email,
+                    telefone=participant_data.get('telefone', ''),
+                    empresa=participant_data.get('empresa', ''),
+                    observacoes=participant_data.get('observacoes', '')
+                )
+                db.session.add(participante)
+                added += 1
+
+        db.session.commit()
+
+        # Clean up uploaded file
+        try:
+            os.remove(filepath)
+        except:
+            pass
+
+        # Show success message
+        message_parts = []
+        if added > 0:
+            message_parts.append(f'{added} novos participantes adicionados')
+        if updated > 0:
+            message_parts.append(f'{updated} participantes reativados')
+        if skipped > 0:
+            message_parts.append(f'{skipped} já existentes (ignorados)')
+
+        flash(f'✓ Importação concluída: {", ".join(message_parts)}', 'success')
+        return redirect(url_for('main.detalhe_evento', id=evento_id))
+
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        flash(f'Erro ao importar participantes: {str(e)}', 'error')
         return redirect(url_for('main.detalhe_evento', id=evento_id))
 
 

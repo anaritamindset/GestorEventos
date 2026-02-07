@@ -304,8 +304,11 @@
                     {% endfor %}
                 </select>
             </div>
-            <input type="file" name="excel_file" accept=".xlsx,.xls" required
+            <input type="file" name="excel_file" id="excel_file_input" accept=".xlsx,.xls" required
                    style="margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%;">
+            <div id="file_info" style="display: none; margin-bottom: 10px; padding: 10px; background: #e8f5e9; border-radius: 5px; color: #2e7d32;">
+                <i class="fas fa-check-circle"></i> <span id="file_name"></span> (<span id="file_size"></span>)
+            </div>
             <button type="submit" class="btn btn-success">
                 <i class="fas fa-upload"></i> Importar Excel
             </button>
@@ -435,8 +438,63 @@
         overlay.classList.add('active');
     }
 
+    // Excel file validation
+    const excelFileInput = document.querySelector('input[name="excel_file"]');
+    if (excelFileInput) {
+        excelFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileInfo = document.getElementById('file_info');
+            const fileName = document.getElementById('file_name');
+            const fileSize = document.getElementById('file_size');
+
+            if (file) {
+                console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+                // Check file size (16MB limit)
+                const maxSize = 16 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    alert('Erro: O ficheiro é muito grande. Tamanho máximo: 16MB');
+                    e.target.value = '';
+                    if (fileInfo) fileInfo.style.display = 'none';
+                    return;
+                }
+
+                // Check file extension
+                const fileNameLower = file.name.toLowerCase();
+                if (!fileNameLower.endsWith('.xlsx') && !fileNameLower.endsWith('.xls')) {
+                    alert('Erro: Formato inválido. Use ficheiros .xlsx ou .xls');
+                    e.target.value = '';
+                    if (fileInfo) fileInfo.style.display = 'none';
+                    return;
+                }
+
+                // Show file info
+                if (fileInfo && fileName && fileSize) {
+                    fileName.textContent = file.name;
+                    const sizeKB = (file.size / 1024).toFixed(1);
+                    fileSize.textContent = sizeKB + ' KB';
+                    fileInfo.style.display = 'block';
+                }
+
+                console.log('File validation passed');
+            } else {
+                if (fileInfo) fileInfo.style.display = 'none';
+            }
+        });
+    }
+
     // Excel form submit
-    document.getElementById('excelForm').addEventListener('submit', function() {
+    document.getElementById('excelForm').addEventListener('submit', function(e) {
+        const fileInput = document.querySelector('input[name="excel_file"]');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert('Por favor, selecione um ficheiro Excel');
+            e.preventDefault();
+            return;
+        }
+
+        console.log('Submitting form with file:', file.name);
         showLoading('A importar Excel...', 'A processar ficheiro e criar eventos');
     });
 

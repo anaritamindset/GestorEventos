@@ -21,7 +21,7 @@ class Event(db.Model):
     descricao = db.Column(db.Text, nullable=True)
 
     # Dates
-    data_inicio = db.Column(db.Date, nullable=False, index=True)
+    data_inicio = db.Column(db.Date, nullable=True, index=True)  # Made nullable to allow events without dates
     data_fim = db.Column(db.Date, nullable=True)
     duracao_minutos = db.Column(db.Integer, nullable=False)
 
